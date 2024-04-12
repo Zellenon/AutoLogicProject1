@@ -1,4 +1,5 @@
 from typing import List, Set
+import sys
 
 class Variable:
     name: int
@@ -36,6 +37,9 @@ def parse_dimacs(lines: List[str]) -> Set[Clause]:
             Delta |= {Clause({Variable.to_var(int(w)) for w in line.split()})}
     return Delta
 
-
-def test():
-    pass
+if __name__ == "__main__":
+    fname = sys.argv[1]
+    lines = open(fname).readlines()
+    Delta = parse_dimacs(lines)
+    print(Delta)
+    print(fname)
