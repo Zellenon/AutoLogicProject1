@@ -23,7 +23,7 @@ class Clause:
         self.vars = vars
 
     def __repr__(self) -> str:
-        return "{ " + ", ".join(self.vars) + " }"
+        return "{ " + ", ".join({str(w) for w in self.vars}) + " }"
 
 
 def parse_dimacs(lines: List[str]) -> Set[Clause]:
