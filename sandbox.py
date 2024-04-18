@@ -2,7 +2,7 @@ from enum import Enum
 
 input = "p cnf 3 2\n1 2 -3 0\n-2 3 0"
 
-TruthValue = Enum('TruthValue', ['True', 'False', 'Unassigned'])
+TruthValue = Enum('TruthValue', ['TRUE', 'FALSE', 'UNASSIGNED'])
 
 # First data structure: queue of literals to propagate
 to_propagate = []
@@ -21,7 +21,10 @@ def print_global_state():
   print("----- GLOBAL STATE -----")
   print("to_propagate: ", to_propagate)
   print("assignment: ", assignment)
-  print("model: ", model)
+  print("model: ", end="")
+  for i, val in enumerate(model, start=1):
+    print(i, ": ", val, "; ", end="")
+  print()
   print("literals_with_watching_clauses: ", literals_with_watching_clauses)
   print()
 
@@ -38,7 +41,7 @@ def initialize_data_structures(input):
   print() 
 
   for i in range(1, num_variables+1):
-    assignment.append((i, TruthValue.Unassigned.name))
+    model.append(TruthValue.UNASSIGNED)
 
     watching_clauses_pos = []
     watching_clauses_neg = []
@@ -56,6 +59,26 @@ def initialize_data_structures(input):
     literals_with_watching_clauses.append((i, watching_clauses_pos))
     literals_with_watching_clauses.append((-1*i, watching_clauses_neg))
 
-   
+
+# Decide rule. Pick an unassigned literal, give it a random truth value, 
+# and update our data structures accordingly.
+def decide():
+  print("----- EXECUTING DECIDE RULE -----\n")
+  # Update model, queue of literals to propagate, and current assignment
+  for i in range(len(model)):
+    if (model[i] == TruthValue.UNASSIGNED):
+      model[i] = TruthValue.TRUE
+      to_propagate.append(i+1)
+
+      # Increase decision level by 1, starting at 0
+      decision_level = 0
+      if assignment:
+        decision_level = assignment[-1][1] + 1
+
+      assignment.append((i+1, decision_level)) 
+      break
+
 initialize_data_structures(input)
+print_global_state()
+decide()
 print_global_state()
