@@ -30,6 +30,26 @@ class Clause:
         return "{ " + ", ".join({str(w) for w in self.vars}) + " }"
 
 
+class M:
+    tracker: List[Variable | None]
+
+    def append(self, elem: Variable | None):
+        self.tracker += [elem]
+
+
+class AppState:
+    m: M
+    Delta: Set[Clause]
+
+    def __init__(self, m: M, Delta: Set[Clause]) -> None:
+        self.m = m
+        self.Delta = Delta
+
+    @classmethod
+    def from_string(cls, s):
+        return AppState(M(), parse_dimacs(s))
+
+
 def parse_dimacs(lines: List[str]) -> Set[Clause]:
     Delta = set()
     for line in lines:
