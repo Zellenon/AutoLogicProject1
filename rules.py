@@ -2,7 +2,7 @@ import copy
 from enum import Enum
 from typing import Callable
 
-from data_classes import AppState, Variable
+from data_classes import Delta, M, Variable
 
 
 class Sat:
@@ -21,23 +21,24 @@ class Unsat:
         return "Unsat"
 
 
-def add_literal(app_state: AppState, l: Variable) -> AppState:
-    a = copy.deepcopy(app_state)
+@profile
+def add_literal(m: M, l: Variable) -> M:
+    a = copy.deepcopy(m)
+    # a = app_state
     if type(l) == list:
-        a.m.tracker += l
+        a.tracker += l
     else:
-        a.m.append(l)
+        a.append(l)
     return a
 
 
-def match_pure(app_state: AppState) -> bool | None | dict:
-    matches = app_state.literals()
+@profile
+def match_pure(delta: Delta, m: M) -> bool | None | dict:
+    matches = delta.literals
     matches = {
         w
         for w in matches
-        if w.inv() not in matches
-        and w not in app_state.m.tracker
-        and w.inv() not in app_state.m.tracker
+        if w.inv() not in matches and w not in (m.var_set | m.inv_set)
     }
     if len(matches) > 0:
         return {"l": min(matches)}
@@ -45,19 +46,18 @@ def match_pure(app_state: AppState) -> bool | None | dict:
         return None
 
 
-def match_propagate(app_state: AppState) -> bool | None | dict:
-    for clause in app_state.delta:
-        test = clause.vars - {w.inv() for w in app_state.m.tracker if w != None}
-        if len(test) == 1 and list(test)[0] not in app_state.m.tracker:
+@profile
+def match_propagate(delta: Delta, m: M) -> bool | None | dict:
+    for clause in delta.clauses:
+        test = clause.vars - m.inv_set
+        if len(test) == 1 and list(test)[0] not in m.tracker:
             return {"l": list(test)[0]}
     return None
 
 
-def match_decide(app_state: AppState) -> bool | None | dict:
-    options = app_state.literals() - (
-        set(app_state.m.tracker)
-        | {w.inv() for w in app_state.m.tracker if w is not None}
-    )
+@profile
+def match_decide(delta: Delta, m: M) -> bool | None | dict:
+    options = delta.literals - (m.var_set | m.inv_set)
     if len(options) > 0:
         decided = min(options)
         return {"l": [decided, None]}
@@ -65,24 +65,23 @@ def match_decide(app_state: AppState) -> bool | None | dict:
         return None
 
 
-def match_backtrack(app_state: AppState) -> bool | None | dict:
-    if None in app_state.m.tracker:
-        index = next(
-            i for i, w in list(enumerate(app_state.m.tracker))[::-1] if w == None
-        )
-        return {"l": app_state.m.tracker[index - 1].inv(), "i": index - 1}
+@profile
+def match_backtrack(delta: Delta, m: M) -> bool | None | dict:
+    if None in m.tracker:
+        index = next(i for i, w in list(enumerate(m.tracker))[::-1] if w == None)
+        return {"l": m.tracker[index - 1].inv(), "i": index - 1}
 
 
-def do_backtrack(app_state, l: Variable, i: int):
-    a = copy.deepcopy(app_state)
-    a.m.tracker = a.m.tracker[:i] + [l]
+def do_backtrack(m: M, l: Variable, i: int):
+    a = copy.deepcopy(m)
+    a.tracker = a.tracker[:i] + [l]
     return a
 
 
-def match_unsat(app_state) -> bool | None | dict:
-    m = app_state.m.set()
-    for clause in app_state.delta:
-        if {w.inv() for w in clause.vars} <= m:
+@profile
+def match_unsat(delta: Delta, m: M) -> bool | None | dict:
+    for clause in delta.clauses:
+        if clause.vars <= m.inv_set:
             return False
     return None
 

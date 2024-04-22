@@ -1,3 +1,4 @@
+import types
 from functools import reduce
 from typing import List, Set
 
@@ -45,6 +46,9 @@ class Clause:
     def __repr__(self) -> str:
         return "{ " + ", ".join({str(w) for w in self.vars}) + " }"
 
+    def __or__(self, other, /) -> types.UnionType:
+        return Clause(self.vars | other.vars)
+
     def has_var(self, var: Variable) -> bool:
         return (var in self.vars) or (var.inv() in self.vars)
 
@@ -54,9 +58,21 @@ class Clause:
 
 class M:
     tracker: List[Variable | None]
+    var_set: set[Variable]
+    inv_set: set[Variable]
 
     def __init__(self) -> None:
+        self.i = False
+        self.var_set = set()
+        self.inv_set = set()
         self.tracker = []
+        self.i = True
+
+    def __setattr__(self, key, value):
+        if key == "tracker" and self.i:
+            self.var_set = set(self.tracker) - {None}
+            self.inv_set = {w.inv() for w in (set(self.tracker) - {None})}
+        super(M, self).__setattr__(key, value)
 
     def append(self, elem: Variable | None):
         self.tracker += [elem]
@@ -65,44 +81,36 @@ class M:
         return str(self.tracker)
 
     def has_var(self, var: Variable) -> bool:
-        return (var in self.tracker) or (var.inv() in self.tracker)
-
-    def set(self):
-        return {w for w in self.tracker if w is not None}
+        return var in self.var_set | self.inv_set
 
 
-class AppState:
-    m: M
-    delta: list[Clause]
+class Delta:
+    clauses: list[Clause]
 
-    def __init__(self, m: M, delta: list[Clause]) -> None:
-        self.m = m
-        self.delta = delta
+    def __init__(self, clauses: list[Clause]) -> None:
+        self.clauses = clauses
+        self.literals = {x for xs in clauses for x in xs.vars}
 
     @classmethod
     def from_string(cls, s):
-        return AppState(M(), parse_dimacs(s))
-
-    def literals(self):
-        return set(reduce(lambda x, y: x | y, [w.vars for w in self.delta]))
+        return Delta(parse_dimacs(s))
 
     def __repr__(self) -> str:
-        return f"C: {self.delta}\nM: {self.m}"
+        return f"[{', '.join((str(w) for w in self.clauses))}]"
 
-    def is_sat(self) -> bool:
-        m = self.m.set()
-        return all([w.is_sat(m) for w in self.delta])
+    def is_sat(self, m: M) -> bool:
+        return all([w.is_sat(m.var_set) for w in self.clauses])
 
 
 def parse_dimacs(lines: List[str]) -> list[Clause]:
-    Delta = []
+    delta = []
     for line in lines:
         if line[0] == "c":
             continue
         elif "p cnf" in line:
             pass  # We don't actually need to do anything with this line, right?
         else:
-            Delta += [
+            delta += [
                 Clause({Variable.to_var(int(w)) for w in line.split() if int(w) != 0})
             ]
-    return Delta
+    return delta
