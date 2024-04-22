@@ -58,21 +58,14 @@ class Clause:
 
 class M:
     tracker: List[Variable | None]
-    var_set: set[Variable]
-    inv_set: set[Variable]
 
     def __init__(self) -> None:
         self.i = False
-        self.var_set = set()
-        self.inv_set = set()
+        self._var_set = set()
+        self._inv_set = set()
         self.tracker = []
+        self.old_tracker = []
         self.i = True
-
-    def __setattr__(self, key, value):
-        if key == "tracker" and self.i:
-            self.var_set = set(self.tracker) - {None}
-            self.inv_set = {w.inv() for w in (set(self.tracker) - {None})}
-        super(M, self).__setattr__(key, value)
 
     def append(self, elem: Variable | None):
         self.tracker += [elem]
@@ -81,7 +74,25 @@ class M:
         return str(self.tracker)
 
     def has_var(self, var: Variable) -> bool:
-        return var in self.var_set | self.inv_set
+        return var in self.var_set() | self.inv_set()
+
+    def var_set(self) -> set[Variable]:
+        if self.tracker == self.old_tracker:
+            return self._var_set
+        else:
+            self.old_tracker = self.tracker.copy()
+            self._var_set = set(self.tracker) - {None}
+            self._inv_set = {w.inv() for w in self._var_set}
+            return self._var_set
+
+    def inv_set(self) -> set[Variable]:
+        if self.tracker == self.old_tracker:
+            return self._inv_set
+        else:
+            self.old_tracker = self.tracker.copy()
+            self._var_set = set(self.tracker) - {None}
+            self._inv_set = {w.inv() for w in self._var_set}
+            return self._inv_set
 
 
 class Delta:
@@ -99,7 +110,7 @@ class Delta:
         return f"[{', '.join((str(w) for w in self.clauses))}]"
 
     def is_sat(self, m: M) -> bool:
-        return all([w.is_sat(m.var_set) for w in self.clauses])
+        return all([w.is_sat(m.var_set()) for w in self.clauses])
 
 
 def parse_dimacs(lines: List[str]) -> list[Clause]:
