@@ -24,7 +24,7 @@ def do_rules(delta: Delta) -> M:
             if type(res) == dict:
                 applied_rule = True
                 new_m = post(m, **res)
-                print(f"{pre}: {res}")
+                # print(f"{pre}: {res}")
                 if delta.is_sat(new_m):
                     return new_m
                 m = new_m
@@ -34,9 +34,10 @@ def do_rules(delta: Delta) -> M:
                 break
         if (res := match_backtrack(delta, m)) and (not applied_rule):
             applied_rule = True
+            # print(f"backtrack: {res}")
             m = do_backtrack(m, **res)
-        print("-----")
-        print(m)
+        # print("-----")
+        # print(m)
     pbar.close()
     return m
 

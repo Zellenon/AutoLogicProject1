@@ -1,5 +1,4 @@
 import copy
-from enum import Enum
 from typing import Callable
 
 from data_classes import Delta, M, Variable
@@ -21,7 +20,6 @@ class Unsat:
         return "Unsat"
 
 
-@profile
 def add_literal(m: M, l: Variable) -> M:
     a = copy.deepcopy(m)
     # a = app_state
@@ -32,13 +30,12 @@ def add_literal(m: M, l: Variable) -> M:
     return a
 
 
-@profile
 def match_pure(delta: Delta, m: M) -> bool | None | dict:
     matches = delta.literals
     matches = {
         w
         for w in matches
-        if w.inv() not in matches and w not in (m.var_set | m.inv_set)
+        if w.inv() not in matches and w not in (m.var_set() | m.inv_set())
     }
     if len(matches) > 0:
         return {"l": min(matches)}
@@ -46,18 +43,18 @@ def match_pure(delta: Delta, m: M) -> bool | None | dict:
         return None
 
 
-@profile
 def match_propagate(delta: Delta, m: M) -> bool | None | dict:
     for clause in delta.clauses:
-        test = clause.vars - m.inv_set
-        if len(test) == 1 and list(test)[0] not in m.tracker:
-            return {"l": list(test)[0]}
+        test = clause.vars - m.inv_set()
+        if len(test) == 1 and (l := next(iter(test))) not in (
+            m.var_set() | m.inv_set()
+        ):
+            return {"l": l}
     return None
 
 
-@profile
 def match_decide(delta: Delta, m: M) -> bool | None | dict:
-    options = delta.literals - (m.var_set | m.inv_set)
+    options = delta.literals - (m.var_set() | m.inv_set())
     if len(options) > 0:
         decided = min(options)
         return {"l": [decided, None]}
@@ -65,7 +62,6 @@ def match_decide(delta: Delta, m: M) -> bool | None | dict:
         return None
 
 
-@profile
 def match_backtrack(delta: Delta, m: M) -> bool | None | dict:
     if None in m.tracker:
         index = next(i for i, w in list(enumerate(m.tracker))[::-1] if w == None)
@@ -78,10 +74,10 @@ def do_backtrack(m: M, l: Variable, i: int):
     return a
 
 
-@profile
 def match_unsat(delta: Delta, m: M) -> bool | None | dict:
     for clause in delta.clauses:
-        if clause.vars <= m.inv_set:
+        if clause.vars <= m.inv_set():
+            # if False:
             return False
     return None
 
@@ -93,7 +89,7 @@ backtrack = (match_backtrack, do_backtrack)
 
 rules: list[tuple[Callable, Callable]] = [
     pure,
-    (match_unsat, match_unsat),
     propagate,
+    (match_unsat, match_unsat),
     decide,
 ]
