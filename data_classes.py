@@ -48,6 +48,9 @@ class Clause:
     def has_var(self, var: Variable) -> bool:
         return (var in self.vars) or (var.inv() in self.vars)
 
+    def is_sat(self, vars: set[Variable]):
+        return len(self.vars & vars) > 0
+
 
 class M:
     tracker: List[Variable | None]
@@ -60,6 +63,12 @@ class M:
 
     def __repr__(self) -> str:
         return str(self.tracker)
+
+    def has_var(self, var: Variable) -> bool:
+        return (var in self.tracker) or (var.inv() in self.tracker)
+
+    def set(self):
+        return {w for w in self.tracker if w is not None}
 
 
 class AppState:
@@ -79,6 +88,10 @@ class AppState:
 
     def __repr__(self) -> str:
         return f"C: {self.delta}\nM: {self.m}"
+
+    def is_sat(self) -> bool:
+        m = self.m.set()
+        return all([w.is_sat(m) for w in self.delta])
 
 
 def parse_dimacs(lines: List[str]) -> list[Clause]:
