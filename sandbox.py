@@ -225,17 +225,11 @@ def backtrack():
     model[abs(assignment[-1][0]) - 1] = TruthValue.FALSE;
   else:
     model[abs(assignment[-1][0]) - 1] = TruthValue.TRUE
-    
-  print("got here")
-    
+      
   # Update watched literals for flipped literal
   curr_lit = -1 * assignment[-1][0]
   curr_lit_index = compute_lit_index(curr_lit)
   watching_clauses = copy.deepcopy(literals_with_watching_clauses[curr_lit_index][1])
-  
-  print(watching_clauses)
-  print(curr_lit)
-  print(curr_lit_index)
   
   for clause_index in watching_clauses: 
     lit_to_prop = update_watched_literals(clause_index, clauses[clause_index-1], curr_lit)
