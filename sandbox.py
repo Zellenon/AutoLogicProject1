@@ -5,12 +5,19 @@ import copy
 # TODO: Enable unit clause preprocessing
 # TODO: Clean up repeated code in backtrack and propagate
 
-input = """p cnf 4 5
-1 2 3 -4 0
-1 2 3 4 0
+# TODO: Bug: Somehow, after backtracking, we have both a literal and its complement in to_propagate
+#       when they shouldn't be.
+#       Check the current input as soon as model becomes FALSE, UNASSIGNED, UNASSIGNED
+#       What happens if we backtrack while computing the updated watched literals in propagate?
+
+input = """p cnf 3 7
+-1 -2 -3 0
+-1 -2 3 0
+-1 2 -3 0
+1 -2 -3 0
+1 -2 3 0
 1 2 -3 0
-1 -2 0
--1 0"""
+1 2 3 0"""
 
 TruthValue = Enum('TruthValue', ['TRUE', 'FALSE', 'UNASSIGNED'])
 
@@ -33,6 +40,7 @@ decision_level = 0
 
 # Debug printing function
 def print_global_state():
+  print("----- GLOBAL STATE -----")
   print("to_propagate: ", to_propagate)
   print_assignment()
   print("model: ", end="")
@@ -40,7 +48,7 @@ def print_global_state():
     print(i, ": ", val, "; ", end="")
   print()
   print("literals_with_watching_clauses: ", literals_with_watching_clauses)
-  print()
+  print("----- GLOBAL STATE -----\n")
   
 def preprocess():
   for clause in clauses[1:]:
@@ -116,6 +124,7 @@ def decide():
 # with old_lit and return None. If not, we return the other watch 
 # literal (which may spur a conflict or a new propagation).
 def update_watched_literals(clause_number, clause, old_lit):
+  print("----- UPDATING WATCHED LITERALS -----")
   print("falsified literal:", old_lit)
   print("clause to (attempt to) update:", clause)
   print("clause number:", clause_number)
@@ -134,10 +143,12 @@ def update_watched_literals(clause_number, clause, old_lit):
       new_lit = int(clause[i])
       print("new literal to watch:", new_lit, i)
       print("UPDATING literals_with_watching_clauses")
-      print(literals_with_watching_clauses)
+      print(literals_with_watching_clauses[compute_lit_index(old_lit)][1])
+      print(literals_with_watching_clauses[compute_lit_index(new_lit)][1])
       literals_with_watching_clauses[compute_lit_index(old_lit)][1].remove(clause_number)
       literals_with_watching_clauses[compute_lit_index(new_lit)][1].append(clause_number)
-      print(literals_with_watching_clauses)
+      print(literals_with_watching_clauses[compute_lit_index(old_lit)][1])
+      print(literals_with_watching_clauses[compute_lit_index(new_lit)][1])
       
       clause[old_lit_index], clause[i] = clause[i], clause[old_lit_index]
       print("reordered clause:", clause)
@@ -239,13 +250,18 @@ def backtrack():
     # If it is unassigned, we propagate it. If it is false, we have a conflict.
     if lit_to_prop:
       if model[abs(lit_to_prop) - 1] == TruthValue.UNASSIGNED:
+        print("PROPAGATING", lit_to_prop)
         to_propagate.append(lit_to_prop)
+        print_global_state()
       elif lit_to_prop > 0 and model[abs(lit_to_prop) - 1] == TruthValue.FALSE:
+        print_global_state()
         backtrack()
         return
       elif lit_to_prop < 0 and model[abs(lit_to_prop) - 1] == TruthValue.TRUE:
+        print_global_state()
         backtrack()
         return
+  print_global_state()
  
 def main():    
   initialize_data_structures(input)
