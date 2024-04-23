@@ -10,14 +10,12 @@ import copy
 #       Check the current input as soon as model becomes FALSE, UNASSIGNED, UNASSIGNED
 #       What happens if we backtrack while computing the updated watched literals in propagate?
 
-input = """p cnf 3 7
--1 -2 -3 0
--1 -2 3 0
--1 2 -3 0
-1 -2 -3 0
-1 -2 3 0
-1 2 -3 0
-1 2 3 0"""
+input = """c CaDiCaL
+c https://github.com/arminbiere/cadical/tree/master/test/cnf
+c 
+p cnf 0 1
+0
+"""
 
 TruthValue = Enum('TruthValue', ['TRUE', 'FALSE', 'UNASSIGNED'])
 
@@ -48,7 +46,6 @@ def print_global_state():
     print(i, ": ", val, "; ", end="")
   print()
   print("literals_with_watching_clauses: ", literals_with_watching_clauses)
-  print("----- GLOBAL STATE -----\n")
   
 def preprocess():
   for clause in clauses[1:]:
@@ -65,19 +62,17 @@ def print_assignment():
 def initialize_data_structures(input):
   input = input.split('\n')
   input = [line.split() for line in input]
-  num_variables = int(input[0][2])
-  num_clauses = int(input[0][3])
   print("----- INITIALIZING GLOBAL STATE -----\n")
   print("input: ", input)
-  print("number of variables: ", num_variables)
-  print("number of clauses: ", num_clauses) 
 
-  for i in range(1, num_clauses+1):
-    if (not input[i][:-1]):
+  for line in input:
+    if (line and line[0] == '0'):
       print("UNSAT")
       exit()
-    if (input[i]):
-      clauses.append(input[i][:-1])
+    if (line and (not line[0] == 'c') and (not line[0] == 'p')):
+      clauses.append(line[:-1])
+    if line and line[0] == 'p':
+      num_variables = int(line[3])
 
   print("clauses: ", clauses, end="\n\n")
   
@@ -103,7 +98,7 @@ def initialize_data_structures(input):
 # Decide rule. Pick an unassigned literal, give it a random truth value, 
 # and update our data structures accordingly.
 def decide():
-  print("----- EXECUTING DECIDE RULE -----\n")
+  print("\n----- EXECUTING DECIDE RULE -----\n")
   global decision_level
   
   # Update model, queue of literals to propagate, and current assignment
@@ -169,7 +164,7 @@ def compute_lit_index(curr_lit):
 # Apply unit propagation to completion (until we exhaust the queue of literals to propagate)
 def propagate():
   while to_propagate:
-    print("----- EXECUTING PROPAGATE RULE -----\n")
+    print("\n----- EXECUTING PROPAGATE RULE -----\n")
     curr_lit = to_propagate.popleft()
     
     # Update the current assignment and model with the literal we're propagating
@@ -191,7 +186,6 @@ def propagate():
     curr_lit_comp_index = compute_lit_index(-1*curr_lit)
     watching_clauses = copy.deepcopy(literals_with_watching_clauses[curr_lit_comp_index][1])
     for clause_index in watching_clauses: 
-      print("clause index:", clause_index)
       lit_to_prop = update_watched_literals(clause_index, clauses[clause_index-1], -1*curr_lit)
       # If we cannot find a new literal to watch for some clause,
       # we look at the __other__ watched literal. If it is true, no action is needed.
@@ -210,7 +204,7 @@ def propagate():
     
 # Backtracking function. Update assignment and model.
 def backtrack():
-  print("----- EXECUTING BACKTRACK RULE -----\n")
+  print("\n----- EXECUTING BACKTRACK RULE -----\n")
   global decision_level
   global to_propagate
   
@@ -230,37 +224,13 @@ def backtrack():
     exit()
     
   # Flip the last decision and update the decision level  
-  assignment[-1] = (-1 * assignment[-1][0], assignment[-1][1] - 1) 
-  decision_level = assignment[-1][1]
-  if model[abs(assignment[-1][0]) - 1] == TruthValue.TRUE:
-    model[abs(assignment[-1][0]) - 1] = TruthValue.FALSE;
-  else:
-    model[abs(assignment[-1][0]) - 1] = TruthValue.TRUE
+  to_propagate.append(-1 * assignment[-1][0])
+  decision_level = assignment[-1][1] - 1
       
-  # Update watched literals for flipped literal
-  curr_lit = -1 * assignment[-1][0]
-  curr_lit_index = compute_lit_index(curr_lit)
-  watching_clauses = copy.deepcopy(literals_with_watching_clauses[curr_lit_index][1])
+  # Clear last decision from model and assignment
+  model[abs(assignment[-1][0])-1] = TruthValue.UNASSIGNED
+  assignment.pop()
   
-  for clause_index in watching_clauses: 
-    lit_to_prop = update_watched_literals(clause_index, clauses[clause_index-1], curr_lit)
-    
-    # If we cannot find a new literal to watch for some clause,
-    # we look at the __other__ watched literal. If it is true, no action is needed.
-    # If it is unassigned, we propagate it. If it is false, we have a conflict.
-    if lit_to_prop:
-      if model[abs(lit_to_prop) - 1] == TruthValue.UNASSIGNED:
-        print("PROPAGATING", lit_to_prop)
-        to_propagate.append(lit_to_prop)
-        print_global_state()
-      elif lit_to_prop > 0 and model[abs(lit_to_prop) - 1] == TruthValue.FALSE:
-        print_global_state()
-        backtrack()
-        return
-      elif lit_to_prop < 0 and model[abs(lit_to_prop) - 1] == TruthValue.TRUE:
-        print_global_state()
-        backtrack()
-        return
   print_global_state()
  
 def main():    
@@ -268,6 +238,7 @@ def main():
   #preprocess()
   while True:
     propagate()
-    decide()
+    if (not to_propagate):
+      decide()
 
 main()
