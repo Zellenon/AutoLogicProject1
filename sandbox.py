@@ -3,25 +3,30 @@ from collections import deque
 import copy
 import sys
 
-# TODO: Enable unit clause preprocessing
+# TODO: 
+#  * Enable unit clause preprocessing
+#  * Add nonchronological backjumping
+#  * Add clause learning
+#  * Disable debug printing
 
 TruthValue = Enum('TruthValue', ['TRUE', 'FALSE', 'UNASSIGNED'])
 
 # First data structure: queue of literals to propagate
 to_propagate = deque()
 
-# Second data structure: current assignment
+# Second data structure: current assignment (list of <literal, decision level> pairs)
 assignment = []
 
-# Third data structure: model of current assignment
+# Third data structure: model of current assignment (mapping of variables to truth values)
 model = []
 
 # Fourth data structure: list of literals, each pointing to a list of clauses watching that literal
 literals_with_watching_clauses = []
 
-# Fifth data structure: set of clauses
+# Fifth data structure: list of clauses
 clauses = []
 
+# Global variable: Current decision level
 decision_level = 0
 
 # Debug printing function
@@ -52,13 +57,12 @@ def initialize_data_structures():
   f = open(sys.argv[1], "r")
   for line in f:
     line = line.split()
-    if (line and line[0] == '0'):
-      print("UNSAT")
-      exit()
-    if (line and (not line[0] == 'c') and (not line[0] == 'p')):
-      clauses.append(line[:-1])
-    if line and line[0] == 'p':
+    if line and line[0] == '0':
+      exit_unsat()
+    elif line and line[0] == 'p':
       num_variables = int(line[3])
+    elif line and not (line[0] == 'c'):
+      clauses.append(line[:-1])
 
   print("clauses: ", clauses, end="\n\n")
   
@@ -81,6 +85,20 @@ def initialize_data_structures():
     literals_with_watching_clauses.append((i, watching_clauses_pos))
     literals_with_watching_clauses.append((-1*i, watching_clauses_neg))
 
+def exit_sat():
+  print("sat")
+  for i, assignment in enumerate(model):
+    if assignment == TruthValue.TRUE:
+      truth_value = "true"
+    else:
+      truth_value = "false"
+    print(f"{i+1} := {truth_value}")
+  exit()
+    
+def exit_unsat():
+  print("unsat")
+  exit()
+
 # Decide rule. Pick an unassigned literal, give it a random truth value, 
 # and update our data structures accordingly.
 def decide():
@@ -97,8 +115,7 @@ def decide():
       return
     
   # If no variable to decide on, the problem is SAT
-  print("SAT")
-  exit()
+  exit_sat()
 
 # We have falsified old_lit (watched by clause) and therefore need to update clause's
 # watched literals. We look for another literal to watch. If one exists, we swap it 
@@ -206,8 +223,7 @@ def backtrack():
     
   # If there is no decision to flip, fail
   if assignment[-1][1] == 0:
-    print("UNSAT")
-    exit()
+    exit_unsat()
     
   # Flip the last decision and update the decision level  
   to_propagate.append(-1 * assignment[-1][0])
