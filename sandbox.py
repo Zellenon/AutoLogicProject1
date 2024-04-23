@@ -1,21 +1,9 @@
 from enum import Enum
 from collections import deque
 import copy
+import sys
 
 # TODO: Enable unit clause preprocessing
-# TODO: Clean up repeated code in backtrack and propagate
-
-# TODO: Bug: Somehow, after backtracking, we have both a literal and its complement in to_propagate
-#       when they shouldn't be.
-#       Check the current input as soon as model becomes FALSE, UNASSIGNED, UNASSIGNED
-#       What happens if we backtrack while computing the updated watched literals in propagate?
-
-input = """c CaDiCaL
-c https://github.com/arminbiere/cadical/tree/master/test/cnf
-c 
-p cnf 0 1
-0
-"""
 
 TruthValue = Enum('TruthValue', ['TRUE', 'FALSE', 'UNASSIGNED'])
 
@@ -59,13 +47,11 @@ def print_assignment():
   print()
 
 # Initialization function for our core data structures
-def initialize_data_structures(input):
-  input = input.split('\n')
-  input = [line.split() for line in input]
+def initialize_data_structures():
   print("----- INITIALIZING GLOBAL STATE -----\n")
-  print("input: ", input)
-
-  for line in input:
+  f = open(sys.argv[1], "r")
+  for line in f:
+    line = line.split()
     if (line and line[0] == '0'):
       print("UNSAT")
       exit()
@@ -234,7 +220,7 @@ def backtrack():
   print_global_state()
  
 def main():    
-  initialize_data_structures(input)
+  initialize_data_structures()
   #preprocess()
   while True:
     propagate()
