@@ -1,17 +1,16 @@
 from enum import Enum
 from collections import deque
+import copy
 
-# TODO: Preprocess unit clauses
+# TODO: Enable unit clause preprocessing
+# TODO: Clean up repeated code in backtrack and propagate
 
-input = """p cnf 3 8
--1 -2 -3 0
--1 -2 3 0
--1 2 -3 0
--1 2 3 0
-1 -2 -3 0
-1 -2 3 0
+input = """p cnf 4 5
+1 2 3 -4 0
+1 2 3 4 0
 1 2 -3 0
-1 2 3 0"""
+1 -2 0
+-1 0"""
 
 TruthValue = Enum('TruthValue', ['TRUE', 'FALSE', 'UNASSIGNED'])
 
@@ -179,7 +178,9 @@ def propagate():
     # For these clauses, we either (i) find a new literal to watch, or 
     #                              (ii) add the other watched literal to to_propagate
     curr_lit_comp_index = compute_lit_index(-1*curr_lit)
-    for clause_index in literals_with_watching_clauses[curr_lit_comp_index][1]: 
+    watching_clauses = copy.deepcopy(literals_with_watching_clauses[curr_lit_comp_index][1])
+    for clause_index in watching_clauses: 
+      print("clause index:", clause_index)
       lit_to_prop = update_watched_literals(clause_index, clauses[clause_index-1], -1*curr_lit)
       # If we cannot find a new literal to watch for some clause,
       # we look at the __other__ watched literal. If it is true, no action is needed.
@@ -197,7 +198,6 @@ def propagate():
     print_global_state()
     
 # Backtracking function. Update assignment and model.
-# TODO: Debug.
 def backtrack():
   print("----- EXECUTING BACKTRACK RULE -----\n")
   global decision_level
@@ -226,10 +226,18 @@ def backtrack():
   else:
     model[abs(assignment[-1][0]) - 1] = TruthValue.TRUE
     
-  # TODO: Update watched literals for flipped literal
-  curr_lit = assignment[-1][0]
+  print("got here")
+    
+  # Update watched literals for flipped literal
+  curr_lit = -1 * assignment[-1][0]
   curr_lit_index = compute_lit_index(curr_lit)
-  for clause_index in literals_with_watching_clauses[curr_lit_index][1]: 
+  watching_clauses = copy.deepcopy(literals_with_watching_clauses[curr_lit_index][1])
+  
+  print(watching_clauses)
+  print(curr_lit)
+  print(curr_lit_index)
+  
+  for clause_index in watching_clauses: 
     lit_to_prop = update_watched_literals(clause_index, clauses[clause_index-1], curr_lit)
     
     # If we cannot find a new literal to watch for some clause,
