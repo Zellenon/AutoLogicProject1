@@ -101,12 +101,18 @@ class State:
         # self.watched_lits = [(min(w), min(w - {min(w)})) for w in self.delta]
         self.literals = {x for xs in self.delta for x in xs}
 
+    def __repr__(self) -> str:
+        strings = [f"Delta: {self.delta}", f"M: {self.m}", f"To Prop: {self.to_prop}"]
+        return "\n".join(strings)
+
     def is_sat(self) -> bool:
         return all([w.is_sat(self.m.var_set()) for w in self.delta])
 
     def copy(self):
         temp = State(self.delta)
         temp.m = copy.deepcopy(self.m)
+        temp.to_prop = copy.deepcopy(self.to_prop)
+        # temp.watched_lits = copy.deepcopy(self.watched_lits)
         return temp
 
 
