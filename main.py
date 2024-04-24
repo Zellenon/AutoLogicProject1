@@ -2,7 +2,7 @@ import sys
 
 from tqdm import tqdm
 
-from data_classes import M, State, parse_dimacs
+from data_classes import State, parse_dimacs
 from rules import Sat, Unsat, do_backtrack, match_backtrack, rules
 
 

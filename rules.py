@@ -1,7 +1,7 @@
 from functools import reduce
 from typing import Callable
 
-from data_classes import State, Variable
+from data_classes import State, Literal
 
 
 class Sat:
@@ -20,7 +20,7 @@ class Unsat:
         return "Unsat"
 
 
-def add_literal(state: State, l: Variable) -> State:
+def add_literal(state: State, l: Literal) -> State:
     a = state.copy()
     # a = app_state
     if type(l) == list:
@@ -31,7 +31,7 @@ def add_literal(state: State, l: Variable) -> State:
 
 
 def match_pure(state: State) -> bool | None | dict:
-    matches = reduce(lambda x, y: x & y, state.delta, set()) - state.m.var_set()
+    matches = reduce(lambda x, y: x & y, state.delta, set()) - state.m.lit_set()
     if len(matches) > 0:
         return {"l": list(matches)}
     else:
@@ -40,16 +40,16 @@ def match_pure(state: State) -> bool | None | dict:
 
 def match_propagate(state: State) -> bool | None | dict:
     for clause in state.delta:
-        test = clause - state.m.inv_set()
+        test = clause - state.m.comp_set()
         if len(test) == 1 and (l := next(iter(test))) not in (
-            state.m.var_set() | state.m.inv_set()
+            state.m.lit_set() | state.m.comp_set()
         ):
             return {"l": l}
     return None
 
 
 def match_decide(state: State) -> bool | None | dict:
-    options = state.literals - (state.m.var_set() | state.m.inv_set())
+    options = state.literals - (state.m.lit_set() | state.m.comp_set())
     if len(options) > 0:
         decided = min(options)
         return {"l": [decided, None]}
@@ -60,10 +60,10 @@ def match_decide(state: State) -> bool | None | dict:
 def match_backtrack(state: State) -> bool | None | dict:
     if None in state.m.tracker:
         index = next(i for i, w in list(enumerate(state.m.tracker))[::-1] if w == None)
-        return {"l": state.m[index - 1].inv(), "i": index - 1}
+        return {"l": state.m[index - 1].comp(), "i": index - 1}
 
 
-def do_backtrack(state: State, l: Variable, i: int) -> State:
+def do_backtrack(state: State, l: Literal, i: int) -> State:
     a = state.copy()
     a.m.tracker = a.m[:i] + [l]
     return a
@@ -71,7 +71,7 @@ def do_backtrack(state: State, l: Variable, i: int) -> State:
 
 def match_unsat(state: State) -> bool | None | dict:
     for clause in state.delta:
-        if clause <= state.m.inv_set():
+        if clause <= state.m.comp_set():
             # if False:
             return False
     return None
