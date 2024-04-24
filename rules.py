@@ -1,7 +1,7 @@
-import copy
+from functools import reduce
 from typing import Callable
 
-from data_classes import Delta, M, Variable
+from data_classes import State, Variable
 
 
 class Sat:
@@ -20,41 +20,36 @@ class Unsat:
         return "Unsat"
 
 
-def add_literal(m: M, l: Variable) -> M:
-    a = copy.deepcopy(m)
+def add_literal(state: State, l: Variable) -> State:
+    a = state.copy()
     # a = app_state
     if type(l) == list:
-        a.tracker += l
+        a.m.tracker += l
     else:
-        a.append(l)
+        a.m.append(l)
     return a
 
 
-def match_pure(delta: Delta, m: M) -> bool | None | dict:
-    matches = delta.literals
-    matches = {
-        w
-        for w in matches
-        if w.inv() not in matches and w not in (m.var_set() | m.inv_set())
-    }
+def match_pure(state: State) -> bool | None | dict:
+    matches = reduce(lambda x, y: x & y, state.delta, set()) - state.m.var_set()
     if len(matches) > 0:
-        return {"l": min(matches)}
+        return {"l": list(matches)}
     else:
         return None
 
 
-def match_propagate(delta: Delta, m: M) -> bool | None | dict:
-    for clause in delta.clauses:
-        test = clause.vars - m.inv_set()
+def match_propagate(state: State) -> bool | None | dict:
+    for clause in state.delta:
+        test = clause - state.m.inv_set()
         if len(test) == 1 and (l := next(iter(test))) not in (
-            m.var_set() | m.inv_set()
+            state.m.var_set() | state.m.inv_set()
         ):
             return {"l": l}
     return None
 
 
-def match_decide(delta: Delta, m: M) -> bool | None | dict:
-    options = delta.literals - (m.var_set() | m.inv_set())
+def match_decide(state: State) -> bool | None | dict:
+    options = state.literals - (state.m.var_set() | state.m.inv_set())
     if len(options) > 0:
         decided = min(options)
         return {"l": [decided, None]}
@@ -62,21 +57,21 @@ def match_decide(delta: Delta, m: M) -> bool | None | dict:
         return None
 
 
-def match_backtrack(delta: Delta, m: M) -> bool | None | dict:
-    if None in m.tracker:
-        index = next(i for i, w in list(enumerate(m.tracker))[::-1] if w == None)
-        return {"l": m.tracker[index - 1].inv(), "i": index - 1}
+def match_backtrack(state: State) -> bool | None | dict:
+    if None in state.m.tracker:
+        index = next(i for i, w in list(enumerate(state.m.tracker))[::-1] if w == None)
+        return {"l": state.m[index - 1].inv(), "i": index - 1}
 
 
-def do_backtrack(m: M, l: Variable, i: int):
-    a = copy.deepcopy(m)
-    a.tracker = a.tracker[:i] + [l]
+def do_backtrack(state: State, l: Variable, i: int) -> State:
+    a = state.copy()
+    a.m.tracker = a.m[:i] + [l]
     return a
 
 
-def match_unsat(delta: Delta, m: M) -> bool | None | dict:
-    for clause in delta.clauses:
-        if clause.vars <= m.inv_set():
+def match_unsat(state: State) -> bool | None | dict:
+    for clause in state.delta:
+        if clause <= state.m.inv_set():
             # if False:
             return False
     return None
@@ -89,7 +84,7 @@ backtrack = (match_backtrack, do_backtrack)
 
 rules: list[tuple[Callable, Callable]] = [
     pure,
-    propagate,
     (match_unsat, match_unsat),
+    propagate,
     decide,
 ]

@@ -1,5 +1,4 @@
-import types
-from functools import reduce
+import copy
 from typing import List, Set
 
 
@@ -21,7 +20,9 @@ class Variable:
         return hash(str(self))
 
     def __lt__(self, other):
-        return self.name < other.name
+        return self.name < other.name or (
+            self.name == other.name and self.value and not (other.value)
+        )
 
     def __repr__(self) -> str:
         return str(self.name * (1 if self.value else -1))
@@ -37,23 +38,17 @@ class Variable:
         return Variable(name=abs(var), value=var > 0)
 
 
-class Clause:
-    vars: Set[Variable]
-
-    def __init__(self, vars: Set[Variable]) -> None:
-        self.vars = vars
+class Clause(Set):
+    # vars: Set[Variable]
 
     def __repr__(self) -> str:
-        return "{ " + ", ".join({str(w) for w in self.vars}) + " }"
-
-    def __or__(self, other, /) -> types.UnionType:
-        return Clause(self.vars | other.vars)
+        return "{ " + ", ".join({str(w) for w in self}) + " }"
 
     def has_var(self, var: Variable) -> bool:
-        return (var in self.vars) or (var.inv() in self.vars)
+        return (var in self) or (var.inv() in self)
 
     def is_sat(self, vars: set[Variable]):
-        return len(self.vars & vars) > 0
+        return len(self & vars) > 0
 
 
 class M:
@@ -69,6 +64,9 @@ class M:
 
     def append(self, elem: Variable | None):
         self.tracker += [elem]
+
+    def __getitem__(self, i):
+        return self.tracker[i]
 
     def __repr__(self) -> str:
         return str(self.tracker)
@@ -95,22 +93,21 @@ class M:
             return self._inv_set
 
 
-class Delta:
-    clauses: list[Clause]
+class State:
+    def __init__(self, delta: list[Clause]) -> None:
+        self.delta = delta
+        self.m = M()
+        self.to_prop = []
+        # self.watched_lits = [(min(w), min(w - {min(w)})) for w in self.delta]
+        self.literals = {x for xs in self.delta for x in xs}
 
-    def __init__(self, clauses: list[Clause]) -> None:
-        self.clauses = clauses
-        self.literals = {x for xs in clauses for x in xs.vars}
+    def is_sat(self) -> bool:
+        return all([w.is_sat(self.m.var_set()) for w in self.delta])
 
-    @classmethod
-    def from_string(cls, s):
-        return Delta(parse_dimacs(s))
-
-    def __repr__(self) -> str:
-        return f"[{', '.join((str(w) for w in self.clauses))}]"
-
-    def is_sat(self, m: M) -> bool:
-        return all([w.is_sat(m.var_set()) for w in self.clauses])
+    def copy(self):
+        temp = State(self.delta)
+        temp.m = copy.deepcopy(self.m)
+        return temp
 
 
 def parse_dimacs(lines: List[str]) -> list[Clause]:
