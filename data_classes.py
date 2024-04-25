@@ -1,6 +1,8 @@
 import copy
 from typing import List, Set
+from enum import Enum
 
+TruthValue = Enum('TruthValue', ['TRUE', 'FALSE', 'UNASSIGNED'])
 
 class Literal:
     name: int
@@ -38,8 +40,7 @@ class Literal:
         return Literal(name=abs(lit), value=lit > 0)
 
 
-class Clause(Set):
-    # lits: Set[Literal]
+class Clause(list):
 
     def __repr__(self) -> str:
         return "{ " + ", ".join({str(w) for w in self}) + " }"
@@ -48,7 +49,7 @@ class Clause(Set):
         return (lit in self) or (lit.comp() in self)
 
     def is_sat(self, lits: set[Literal]):
-        return len(self & lits) > 0
+        return len(set(self) & lits) > 0
 
 
 class M:
@@ -94,12 +95,36 @@ class M:
 
 
 class State:
-    def __init__(self, delta: list[Clause]) -> None:
+    # State initialization function
+    def __init__(self, delta: Set[Clause], num_variables) -> None:
+        self.num_variables = num_variables
         self.delta = delta
         self.m = M()
         self.to_prop = []
-        # self.watched_lits = [(min(w), min(w - {min(w)})) for w in self.delta]
         self.literals = {x for xs in self.delta for x in xs}
+        self.model = []
+        # List of clauses watched by each literal
+        self.literals_with_watching_clauses = []
+        
+        # Initialize model and watched literals
+        for i in range(1, self.num_variables+1):
+            self.model.append(TruthValue.UNASSIGNED)
+
+            watching_clauses_pos = []
+            watching_clauses_neg = []
+
+            for j, clause in enumerate(list(delta), start=1):
+                if (clause[0].name == i and clause[0].value):
+                    watching_clauses_pos.append(int(j))
+                elif (len(clause) > 1 and clause[1].name == i and clause[1].value):
+                    watching_clauses_pos.append(int(j))
+                elif (clause[0].name == i and not clause[0].value):
+                    watching_clauses_neg.append(int(j))
+                elif (len(clause) > 1 and clause[1].name == i and not clause[1].value):
+                    watching_clauses_neg.append(int(j))
+
+            self.literals_with_watching_clauses.append((i, watching_clauses_pos))
+            self.literals_with_watching_clauses.append((-1*i, watching_clauses_neg))
 
     def __repr__(self) -> str:
         strings = [f"Delta: {self.delta}", f"M: {self.m}", f"To Prop: {self.to_prop}"]
@@ -109,7 +134,7 @@ class State:
         return all([w.is_sat(self.m.lit_set()) for w in self.delta])
 
     def copy(self):
-        temp = State(self.delta)
+        temp = State(self.delta, self.num_variables)
         temp.m = copy.deepcopy(self.m)
         temp.to_prop = copy.deepcopy(self.to_prop)
         # temp.watched_lits = copy.deepcopy(self.watched_lits)
@@ -122,9 +147,9 @@ def parse_dimacs(lines: List[str]) -> list[Clause]:
         if line[0] == "c":
             continue
         elif "p cnf" in line:
-            pass  # We don't actually need to do anything with this line, right?
+            num_variables = int(line.split()[3])
         else:
             delta += [
                 Clause({Literal.to_lit(int(w)) for w in line.split() if int(w) != 0})
             ]
-    return delta
+    return State(delta, num_variables)

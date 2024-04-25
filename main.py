@@ -9,7 +9,7 @@ from rules import Sat, Unsat, do_backtrack, match_backtrack, rules
 def do_rules(state: State) -> State:
     applied_rule = True
 
-    pbar = tqdm(total=2 + len({w.name for w in delta.literals}))
+    pbar = tqdm(total=2 + len({w.name for w in state.literals}))
     while applied_rule:
         pbar.set_description(
             f"M: ({len(state.m.tracker)}, {len([w for w in state.m.tracker if w == None])})"
@@ -45,11 +45,11 @@ def do_rules(state: State) -> State:
 if __name__ == "__main__":
     fname = sys.argv[1]
     lines = open(fname).readlines()
-    delta = State(parse_dimacs(lines))
-    print(delta)
+    state = parse_dimacs(lines)
+    print(state)
     print(fname)
 
-    final_state = do_rules(delta)
+    final_state = do_rules(state)
     result = Sat() if final_state.is_sat() else Unsat()
     print()
     print(final_state)

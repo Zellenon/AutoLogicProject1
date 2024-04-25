@@ -31,7 +31,7 @@ def add_literal(state: State, l: Literal) -> State:
 
 
 def match_pure(state: State) -> bool | None | dict:
-    matches = reduce(lambda x, y: x & y, state.delta, set()) - state.m.lit_set()
+    matches = reduce(lambda x, y: x & set(y), state.delta, set()) - state.m.lit_set()
     if len(matches) > 0:
         return {"l": list(matches)}
     else:
@@ -40,7 +40,7 @@ def match_pure(state: State) -> bool | None | dict:
 
 def match_propagate(state: State) -> bool | None | dict:
     for clause in state.delta:
-        test = clause - state.m.comp_set()
+        test = set(clause) - state.m.comp_set()
         if len(test) == 1 and (l := next(iter(test))) not in (
             state.m.lit_set() | state.m.comp_set()
         ):
@@ -71,7 +71,7 @@ def do_backtrack(state: State, l: Literal, i: int) -> State:
 
 def match_unsat(state: State) -> bool | None | dict:
     for clause in state.delta:
-        if clause <= state.m.comp_set():
+        if set(clause) <= state.m.comp_set():
             # if False:
             return False
     return None
