@@ -64,13 +64,26 @@ class M:
 class State:
     # State initialization function
     def __init__(self, delta: Set[Clause], num_variables) -> None:
+        # The number of variables in the problem (integer)
         self.num_variables = num_variables
+        
+        # List of clauses
         self.delta = delta
+        
+        # Current assignment (list of <literal, int> pairs, where the int represents
+        # the decision level of the corresponding literal)
         self.m = M()
+        
+        # Queue of literals to propagate
         self.to_prop = deque()
-        self.literals = {x for xs in self.delta for x in xs}
+        
+        # Current model. The ith index corresponds to the i+1st variable.
+        # Each variable is TRUE, FALSE, or UNASSIGNED (see TruthValue enum)
         self.model = []
+        
+        # The current decision level
         self.decision_level = 0
+        
         # List of clauses watched by each literal. Each element is a pair.
         # The first item in the pair is the literal, and the second item
         # is the list of clauses that watch the literal. The clauses are not given
@@ -106,7 +119,7 @@ class State:
 
 
 def parse_dimacs(lines: List[str]) -> List[Clause]:
-    delta = []
+    delta = [] # Set of clauses
     for line in lines:
         if line[0] == "c":
             continue

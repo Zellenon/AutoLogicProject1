@@ -3,6 +3,7 @@
 ###
 
 import copy
+import random
 from collections import deque
 
 from data_classes import State, Literal, TruthValue
@@ -16,8 +17,11 @@ def decide(state: State) -> None:
     # Update model, queue of literals to propagate, and current assignment
     for i in range(len(state.model)):
         if (state.model[i] == TruthValue.UNASSIGNED):
-            # For now, we are always guessing TRUE initially
-            state.to_prop.append(Literal.to_lit(i+1))
+            # Guess a value for the ith variable
+            if (random.randint(0, 1) == 0):
+                state.to_prop.append(Literal.to_lit(i+1))
+            else:
+                state.to_prop.append(Literal.to_lit(-1*(i+1)))
             state.decision_level += 1
             #print_global_state(state)
             return
@@ -69,6 +73,7 @@ def propagate(state: State) -> None:
 # Backtracking function. Update assignment and model.
 def backtrack(state: State) -> None:
   #print("\n----- EXECUTING BACKTRACK RULE -----\n")
+  # Clear propagation queue
   state.to_prop = deque()
  
   # Clear assignment up to the most recent decision
