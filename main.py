@@ -11,7 +11,7 @@ from rules import propagate, decide
 
 def do_rules(state: State) -> State:
     global pbar 
-    pbar = tqdm(total=2 + len({w.name for w in state.m.tracker}))
+    #pbar = tqdm(total=2 + len({w.name for w in state.m.tracker}))
     while True:
         propagate(state)
         if (not state.to_prop):
@@ -26,5 +26,5 @@ if __name__ == "__main__":
     #print(state)
     #print(fname)
     do_rules(state)
-    pbar.close()
+    #pbar.close()
     

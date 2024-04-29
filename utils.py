@@ -65,12 +65,12 @@ def print_global_state(state: State):
   
 def exit_sat(state: State):
   print("sat")
-  for i, assignment in enumerate(state.model):
-    if assignment == TruthValue.TRUE:
-      truth_value = "true"
-    else:
-      truth_value = "false"
-    print(f"{i+1} := {truth_value}")
+  # for i, assignment in enumerate(state.model):
+  #   if assignment == TruthValue.TRUE:
+  #     truth_value = "true"
+  #   else:
+  #     truth_value = "false"
+  #   print(f"{i+1} := {truth_value}")
   exit()
     
 def exit_unsat():
