@@ -4,6 +4,10 @@ import copy
 import sys
 
 # TODO: 
+#  * Add type hints
+#  * Remove unused stuff, and try to use class methods where possible
+#  * Clean up tabs vs spaces
+
 #  * Enable unit clause preprocessing
 #  * Add nonchronological backjumping
 #  * Add clause learning

@@ -1,5 +1,8 @@
-import copy
-from typing import List, Set
+###
+# File that implements objects representing literals, clauses, and the solver's state
+###
+from collections import deque
+from typing import List, Set, Tuple
 from enum import Enum
 
 TruthValue = Enum('TruthValue', ['TRUE', 'FALSE', 'UNASSIGNED'])
@@ -40,58 +43,22 @@ class Literal:
         return Literal(name=abs(lit), value=lit > 0)
 
 
-class Clause(list):
-
+class Clause(List):
     def __repr__(self) -> str:
         return "{ " + ", ".join({str(w) for w in self}) + " }"
 
-    def has_var(self, lit: Literal) -> bool:
-        return (lit in self) or (lit.comp() in self)
-
-    def is_sat(self, lits: set[Literal]):
-        return len(set(self) & lits) > 0
-
 
 class M:
-    tracker: List[Literal | None]
+    tracker: List[Tuple[Literal, int]]
 
     def __init__(self) -> None:
-        self.i = False
-        self._lit_set = set()
-        self._comp_set = set()
         self.tracker = []
-        self.old_tracker = []
-        self.i = True
 
-    def append(self, elem: Literal | None):
-        self.tracker += [elem]
-
-    def __getitem__(self, i):
-        return self.tracker[i]
+    def append(self, elem: Tuple[Literal, int]):
+        self.tracker.append(elem)
 
     def __repr__(self) -> str:
         return str(self.tracker)
-
-    def has_var(self, lit: Literal) -> bool:
-        return lit in self.lit_set() | self.comp_set()
-
-    def lit_set(self) -> set[Literal]:
-        if self.tracker == self.old_tracker:
-            return self._lit_set
-        else:
-            self.old_tracker = self.tracker.copy()
-            self._lit_set = set(self.tracker) - {None}
-            self._comp_set = {w.comp() for w in self._lit_set}
-            return self._lit_set
-
-    def comp_set(self) -> set[Literal]:
-        if self.tracker == self.old_tracker:
-            return self._comp_set
-        else:
-            self.old_tracker = self.tracker.copy()
-            self._lit_set = set(self.tracker) - {None}
-            self._comp_set = {w.comp() for w in self._lit_set}
-            return self._comp_set
 
 
 class State:
@@ -100,10 +67,14 @@ class State:
         self.num_variables = num_variables
         self.delta = delta
         self.m = M()
-        self.to_prop = []
+        self.to_prop = deque()
         self.literals = {x for xs in self.delta for x in xs}
         self.model = []
-        # List of clauses watched by each literal
+        self.decision_level = 0
+        # List of clauses watched by each literal. Each element is a pair.
+        # The first item in the pair is the literal, and the second item
+        # is the list of clauses that watch the literal. The clauses are not given
+        # directly, rather, it is a list of indices of clauses in delta (with 1-based indexing).
         self.literals_with_watching_clauses = []
         
         # Initialize model and watched literals
@@ -114,13 +85,16 @@ class State:
             watching_clauses_neg = []
 
             for j, clause in enumerate(list(delta), start=1):
-                if (clause[0].name == i and clause[0].value):
+                if (not clause):
+                    print("unsat")
+                    exit()
+                elif (clause[0].name == i and clause[0].value):
                     watching_clauses_pos.append(int(j))
-                elif (len(clause) > 1 and clause[1].name == i and clause[1].value):
+                elif (clause[1:] and clause[1].name == i and clause[1].value):
                     watching_clauses_pos.append(int(j))
                 elif (clause[0].name == i and not clause[0].value):
                     watching_clauses_neg.append(int(j))
-                elif (len(clause) > 1 and clause[1].name == i and not clause[1].value):
+                elif (clause[1:] and clause[1].name == i and not clause[1].value):
                     watching_clauses_neg.append(int(j))
 
             self.literals_with_watching_clauses.append((i, watching_clauses_pos))
@@ -130,18 +104,8 @@ class State:
         strings = [f"Delta: {self.delta}", f"M: {self.m}", f"To Prop: {self.to_prop}"]
         return "\n".join(strings)
 
-    def is_sat(self) -> bool:
-        return all([w.is_sat(self.m.lit_set()) for w in self.delta])
 
-    def copy(self):
-        temp = State(self.delta, self.num_variables)
-        temp.m = copy.deepcopy(self.m)
-        temp.to_prop = copy.deepcopy(self.to_prop)
-        # temp.watched_lits = copy.deepcopy(self.watched_lits)
-        return temp
-
-
-def parse_dimacs(lines: List[str]) -> list[Clause]:
+def parse_dimacs(lines: List[str]) -> List[Clause]:
     delta = []
     for line in lines:
         if line[0] == "c":
