@@ -3,11 +3,11 @@
 ###
 from data_classes import TruthValue, Literal, Clause, State
 
-def compute_lit_index(curr_lit: Literal) -> int:
-    if curr_lit.value:
-        return curr_lit.name * 2 - 2
+def compute_lit_index(lit: Literal) -> int:
+    if lit.value:
+        return lit.name * 2 - 2
     else:
-        return curr_lit.name * 2 - 1
+        return lit.name * 2 - 1
     
 # We have falsified old_lit (watched by 'clause') and therefore need to update clause's
 # watched literals. We look for another literal to watch. If one exists, we swap it 

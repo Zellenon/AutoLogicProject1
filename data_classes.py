@@ -6,6 +6,7 @@ from typing import List, Set, Tuple
 from enum import Enum
 
 TruthValue = Enum('TruthValue', ['TRUE', 'FALSE', 'UNASSIGNED'])
+Reason = Enum('Reason', ['DECIDE', 'PROPAGATE', 'BACKJUMP'])
 
 class Literal:
     name: int
@@ -37,6 +38,12 @@ class Literal:
 
     def same_lit(self, other) -> bool:
         return self.name == other.name
+    
+    def to_int(self) -> int:
+        if self.value:
+            self.name 
+        else: 
+            -1*self.name
 
     @staticmethod
     def to_lit(lit: int):
@@ -63,18 +70,24 @@ class M:
 
 class State:
     # State initialization function
-    def __init__(self, delta: Set[Clause], num_variables) -> None:
+    def __init__(self, delta: list[Clause], num_variables, num_clauses) -> None:
         # The number of variables in the problem (integer)
         self.num_variables = num_variables
+        
+        # The number of clauses in the problem (integer)
+        self.num_clauses = num_clauses
         
         # List of clauses
         self.delta = delta
         
         # Current assignment (list of <literal, int> pairs, where the int represents
         # the decision level of the corresponding literal)
+        # Should also track a REASON, either DECISION, PROPAGATION, or BACKTRACK
         self.m = M()
         
-        # Queue of literals to propagate
+        # Queue of < literal, reason, int > triples to propagate.
+        # If the reason is propagation, then the int refers to the clause index of the propagating clause.
+        # Otherwise, the int is not meaningful and is set to -1.
         self.to_prop = deque()
         
         # Current model. The ith index corresponds to the i+1st variable.
@@ -83,6 +96,9 @@ class State:
         
         # The current decision level
         self.decision_level = 0
+        
+        # Conflict clause option (can be None if there is no conflict clause)
+        self.conflict_clause = None
         
         # List of clauses watched by each literal. Each element is a pair.
         # The first item in the pair is the literal, and the second item
@@ -125,8 +141,9 @@ def parse_dimacs(lines: List[str]) -> List[Clause]:
             continue
         elif "p cnf" in line:
             num_variables = int(line.split()[3])
+            num_clauses = int(line.split()[2])
         else:
             delta += [
                 Clause({Literal.to_lit(int(w)) for w in line.split() if int(w) != 0})
             ]
-    return State(delta, num_variables)
+    return State(delta, num_variables, num_clauses)
