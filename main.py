@@ -3,7 +3,7 @@
 ###
 import sys
 
-from tqdm import tqdm
+#from tqdm import tqdm
 
 from data_classes import State, parse_dimacs
 from rules import propagate, decide
