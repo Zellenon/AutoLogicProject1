@@ -2,7 +2,7 @@
 
 ## Usage
 
-Our solver is implemented in Python 3.11.7, but we anticipate it should be compatible with any version of Python 3.
+Our solver is implemented in Python 3.11.7, but we anticipate it should be compatible with any version >= 3.5.
 Below, we outline some steps to run the project, along with their associated terminal commands. 
 
 1. Clone the directory and cd into the project repo \
