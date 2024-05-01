@@ -142,6 +142,8 @@ def parse_dimacs(lines: List[str]) -> List[Clause]:
         elif "p cnf" in line:
             num_variables = int(line.split()[3])
             num_clauses = int(line.split()[2])
+        elif line.strip() == "":
+            continue
         else:
             delta += [
                 Clause({Literal.to_lit(int(w)) for w in line.split() if int(w) != 0})
