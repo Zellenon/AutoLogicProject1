@@ -2,7 +2,8 @@
 
 ## Usage
 
-Below, we outline some steps to run the project, along with their associated terminal commands.
+Our solver is implemented in Python 3.11.7, but we anticipate it should be compatible with any version of Python 3.
+Below, we outline some steps to run the project, along with their associated terminal commands. 
 
 1. Clone the directory and cd into the project repo \
    `git clone https://github.com/Zellenon/AutoLogicProject1` \
@@ -10,11 +11,11 @@ Below, we outline some steps to run the project, along with their associated ter
 3. Switch to the `merged-solvers` branch \
     `git fetch` \
     `git switch merged-solvers`
-4. Run the test script. The test script will iteratively run the solver on each test 
-   file in the `project1-tests` directory. It imposes a timeout of 10 seconds for each test case. \
-    `./run_tests.zsh`
-5. Call the project on a single .cnf file \
-    `python3 main.py <filename>`
-6. Use pip to install any necessary dependencies  \
+4. You may need to use `pip` to install missing dependencies. In particular, the `typing` package is required. Skip this step for now, but come back after step 5 or 6 if necessary.  \
     `pip install <missing-package>` OR \
     `pip3 install <missing-package>`
+5. Run the test script. The test script will iteratively run the solver on each test 
+   file in the `project1-tests` directory. It imposes a timeout of 10 seconds for each test case. \
+    `./run_tests.zsh`
+6. Call the project on a single .cnf file \
+    `python3 main.py <filename>`
