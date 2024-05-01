@@ -17,5 +17,5 @@ Below, we outline some steps to run the project, along with their associated ter
 5. Run the test script. The test script will iteratively run the solver on each test 
    file in the `project1-tests` directory. It imposes a timeout of 10 seconds for each test case. \
     `./run_tests.zsh`
-6. You can also call the solver on a single .cnf file. \
+6. You can also call the solver on a single `.cnf` file. \
     `python3 main.py <filename>`
