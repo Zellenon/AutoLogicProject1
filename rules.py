@@ -43,16 +43,14 @@ def propagate(state: State) -> None:
         if curr_lit.value:
             if state.model[curr_lit.name-1] == TruthValue.FALSE:
                 conflict(state, curr_clause_index)
-                new_decision_level, max_dl_lit = explain(state)
-                learn(state, max_dl_lit)
+                new_decision_level = explain(state)
                 backjump(state, new_decision_level)
             else:
                 state.model[curr_lit.name-1] = TruthValue.TRUE
         else:
             if state.model[curr_lit.name-1] == TruthValue.TRUE:
                 conflict(state, curr_clause_index)
-                new_decision_level, max_dl_lit = explain(state)
-                learn(state, max_dl_lit)
+                new_decision_level = explain(state)
                 backjump(state, new_decision_level)
             else:
                 state.model[curr_lit.name - 1] = TruthValue.FALSE 
@@ -72,14 +70,12 @@ def propagate(state: State) -> None:
                     state.to_prop.append((lit_to_prop, Reason.PROPAGATE, clause_index))
                 elif lit_to_prop.value and state.model[lit_to_prop.name - 1] == TruthValue.FALSE:
                     conflict(state, curr_clause_index)
-                    new_decision_level, max_dl_lit = explain(state)
-                    learn(state, max_dl_lit)
+                    new_decision_level = explain(state)
                     backjump(state, new_decision_level)
                     return
                 elif not lit_to_prop.value and state.model[lit_to_prop.name - 1] == TruthValue.TRUE:
                     conflict(state, curr_clause_index)
-                    new_decision_level, max_dl_lit = explain(state)
-                    learn(state, max_dl_lit)
+                    new_decision_level = explain(state)
                     backjump(state, new_decision_level)
                     return
                 
@@ -89,6 +85,8 @@ def propagate(state: State) -> None:
 # Perform resolution on the conflict clause until we reach a UIP.
 # Return the decision level to backjump to.
 def explain(state: State) -> int:
+    print("\n----- EXECUTING EXPLAIN RULE -----\n")
+    print_global_state(state)
     # "Mark" all literals from conflict clause
     marked_lits = set()
     for lit in state.conflict_clause:
@@ -97,25 +95,25 @@ def explain(state: State) -> int:
     # We keep applying explain until we find a level to backjump to
     while True:
         if not state.m.tracker:
-            exit_unsat()
+            break
             
-        top_assgn = state.m.tracker[-1]
+        top_assign = state.m.tracker[-1]
         
         # If the top literal in assignment is unmarked, we clear it
-        if top_assgn[0] not in marked_lits:
+        if top_assign[0] not in marked_lits:
             state.m.tracker.pop()
             continue
         
         # We check if there is another marked literal before the most recent decision.
         # If the current marked literal is a decision, this is trivially true.
-        if top_assgn[2] == Reason.DECIDE:
+        if top_assign[2] == Reason.DECIDE:
             break
 
         # Otherwise, we search for another marked literal between
         # here and the next decision.
         exists_other_marked_lit = False
-        for i, assgn in reversed(list(enumerate(state.m.tracker[:-1]))):
-            if assgn[0] in marked_lits:
+        for i, assign in reversed(list(enumerate(state.m.tracker[:-1]))):
+            if assign[0] in marked_lits:
                 exists_other_marked_lit = True
                 break
             if state.m.tracker[i][2] == Reason.DECIDE:
@@ -126,15 +124,16 @@ def explain(state: State) -> int:
             break
         
         # If so, pop the marked literal and mark its causes
-        marked_lits.remove(top_assgn[0])
+        marked_lits.remove(top_assign[0])
         state.m.tracker.pop()
-        for lit in state.delta[top_assgn[3]-1]:
-            if lit != top_assgn[0]:
+        for lit in state.delta[top_assign[3]-1]:
+            if lit != top_assign[0]:
                 marked_lits.add(lit)
                 
-    state.to_prop.append((top_assgn[0].comp(), Reason.PROPAGATE, state.num_clauses+1))
-    state.decision_level = top_assgn[1] - 1
-    return top_assgn[1], top_assgn[0]
+    learn(state, top_assign[0])
+    state.to_prop.append((top_assign[0].comp(), Reason.PROPAGATE, state.num_clauses))
+    state.decision_level = top_assign[1] - 1
+    return top_assign[1]
         
 # Learn rule.
 # Add the conflict clause to the clause set delta. 
@@ -162,7 +161,7 @@ def learn(state: State, max_dl_lit: Literal) -> None:
 def backjump(state: State, decision_level: int) -> None:
     print("\n----- EXECUTING BACKJUMP RULE -----\n")
     # If there is no decision to flip, fail
-    if decision_level == 0:
+    if decision_level == -1:
         exit_unsat()
         
     # Clear conflict clause
@@ -173,7 +172,7 @@ def backjump(state: State, decision_level: int) -> None:
  
     # Clear assignment up to the most recent decision
     for i, val in reversed(list(enumerate(state.m.tracker))):
-        if state.m.tracker[i-1][1] < decision_level:
+        if state.m.tracker[i-1][1] <= decision_level:
             break
         else: 
             state.m.tracker.pop()

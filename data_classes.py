@@ -52,7 +52,7 @@ class Literal:
 
 class Clause(List):
     def __repr__(self) -> str:
-        return "[ " + ", ".join({str(w) for w in self}) + " ]"
+        return "[ " + ", ".join([str(w) for w in self]) + " ]"
 
 
 class M:

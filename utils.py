@@ -60,7 +60,7 @@ def print_global_state(state: State) -> None:
   print("to_propagate: ", state.to_prop)
   print("assignment: ", end="")
   for val in state.m.tracker:
-    print(f"(literal: {val[0]}, decision_level: {val[1]}) ", end="")
+    print(f"(literal: {val[0]}, decision_level: {val[1]}, reason: {val[2]}, int: {val[3]}) ", end="")
   print()
   print("model: ", end="")
   for i, val in enumerate(state.model, start=1):
