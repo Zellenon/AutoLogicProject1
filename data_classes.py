@@ -113,11 +113,8 @@ class State:
             watching_clauses_pos = []
             watching_clauses_neg = []
 
-            for j, clause in enumerate(list(delta), start=1):
-                if (not clause):
-                    print("unsat")
-                    exit()
-                elif (clause[0].name == i and clause[0].value):
+            for j, clause in enumerate(delta, start=1):
+                if (clause[0].name == i and clause[0].value):
                     watching_clauses_pos.append(int(j))
                 elif (clause[1:] and clause[1].name == i and clause[1].value):
                     watching_clauses_pos.append(int(j))
@@ -128,6 +125,12 @@ class State:
 
             self.literals_with_watching_clauses.append((i, watching_clauses_pos))
             self.literals_with_watching_clauses.append((-1*i, watching_clauses_neg))
+            
+        # Sanity check
+        for clause in self.delta:
+            if not clause:
+                print("unsat")
+                exit()
 
     def __repr__(self) -> str:
         strings = [f"Delta: {self.delta}", f"M: {self.m}", f"To Prop: {self.to_prop}"]
@@ -140,8 +143,8 @@ def parse_dimacs(lines: List[str]) -> List[Clause]:
         if line[0] == "c":
             continue
         elif "p cnf" in line:
-            num_variables = int(line.split()[3])
-            num_clauses = int(line.split()[2])
+            num_variables = int(line.split()[2])
+            num_clauses = int(line.split()[3])
         elif line.strip() == "":
             continue
         else:

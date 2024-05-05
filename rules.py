@@ -143,7 +143,7 @@ def explain(state: State) -> int:
         exit_unsat()  
     
     # Propagate complement of literal with highest decision level in conflict clause
-    state.to_prop = deque([(top_assign[0].comp(), Reason.PROPAGATE, state.num_clauses)])
+    state.to_prop = deque([(top_assign[0].comp(), Reason.PROPAGATE, state.num_clauses+1)])
     
     # Find next highest decision level
     next_decision_level = 0 
@@ -158,20 +158,23 @@ def explain(state: State) -> int:
     print("updated model:", state.model)
     print_global_state(state)
     
-    # Update conflict clause
+    # Learn the current conflict clause
     state.conflict_clause = [val.comp() for val in marked_lits]
+    learn(state, top_assign[0])
+    
     return next_decision_level
         
 # Learn rule.
 # Add the conflict clause to the clause set delta. 
 # Also involves initializing watched literals for the new clause.
+##!! Bug in watched literals of learned clause
 def learn(state: State, max_dl_lit: Literal) -> None:
     print("\n----- EXECUTING LEARN RULE -----")
     state.num_clauses += 1
     
     # Add watched literals for conflict clause.
     # First watched literal is the one at highest decision level. 
-    state.literals_with_watching_clauses[compute_lit_index(max_dl_lit)][1].append(state.num_clauses)
+    state.literals_with_watching_clauses[compute_lit_index(max_dl_lit.comp())][1].append(state.num_clauses)
     
     # Second watched literal is just the first literal of the clause,
     # or the second literal if the first literal is already watched
@@ -206,5 +209,5 @@ def backjump(state: State, decision_level: int) -> None:
 # So, we create a conflict clause.
 def conflict(state: State, clause_index: int) -> None:
     print("\n----- EXECUTING CONFLICT RULE -----\n") 
-    print_global_state(state)   
     state.conflict_clause = state.delta[clause_index-1]
+    print_global_state(state)   
