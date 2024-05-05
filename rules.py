@@ -117,7 +117,7 @@ def explain(state: State) -> int:
             break
 
         # Otherwise, we search for another marked literal between
-        # here and the next decision.
+        # here and the next decision
         exists_other_marked_lit = False
         for i, assign in reversed(list(enumerate(state.m.tracker[:-1]))):
             if assign[0] in marked_lits:
@@ -156,10 +156,10 @@ def explain(state: State) -> int:
     print("updated assignment stack:", state.m.tracker)
     print("updated conflict clause:", [val.comp() for val in marked_lits])
     print("updated model:", state.model)
+    state.conflict_clause = [val.comp() for val in marked_lits]
     print_global_state(state)
     
     # Learn the current conflict clause
-    state.conflict_clause = [val.comp() for val in marked_lits]
     learn(state, top_assign[0])
     
     return next_decision_level
@@ -167,7 +167,6 @@ def explain(state: State) -> int:
 # Learn rule.
 # Add the conflict clause to the clause set delta. 
 # Also involves initializing watched literals for the new clause.
-##!! Bug in watched literals of learned clause
 def learn(state: State, max_dl_lit: Literal) -> None:
     print("\n----- EXECUTING LEARN RULE -----")
     state.num_clauses += 1
@@ -210,4 +209,5 @@ def backjump(state: State, decision_level: int) -> None:
 def conflict(state: State, clause_index: int) -> None:
     print("\n----- EXECUTING CONFLICT RULE -----\n") 
     state.conflict_clause = state.delta[clause_index-1]
+    print("conflict clause:", state.conflict_clause)
     print_global_state(state)   
