@@ -25,7 +25,7 @@ def update_watched_literals(state: State, clause_number: int, clause: Clause, ol
 
     for i in range(2, len(clause)):
         j = clause[i].name - 1
-        if (clause[i].value and state.model[j] != TruthValue.FALSE) or (not clause[i].value and state.model[j] != TruthValue.TRUE):
+        if (clause[i].value and state.model[j] != TruthValue.FALSE) or ((not clause[i].value) and state.model[j] != TruthValue.TRUE):
             
             # Update literals_with_watching_clauses. This clause is no longer watching old_lit,
             # and starts watching new_lit
@@ -67,15 +67,17 @@ def print_global_state(state: State) -> None:
     print(i, ": ", val, "; ", end="")
   print()
   print("literals_with_watching_clauses: ", state.literals_with_watching_clauses)
+  print("conflict clause:", state.conflict_clause)
+  print("clause set:", state.delta)
   
 def exit_sat(state: State):
   print("sat")
-  for i, assignment in enumerate(state.model):
-    if assignment == TruthValue.TRUE:
-      truth_value = "true"
-    else:
-      truth_value = "false"
-    print(f"{i+1} := {truth_value}")
+  # for i, assignment in enumerate(state.model):
+  #   if assignment == TruthValue.TRUE:
+  #     truth_value = "true"
+  #   else:
+  #     truth_value = "false"
+  #   print(f"{i+1} := {truth_value}")
   exit()
     
 def exit_unsat():

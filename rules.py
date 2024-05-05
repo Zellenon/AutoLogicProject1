@@ -18,11 +18,15 @@ def decide(state: State) -> None:
     # Update model, queue of literals to propagate, and current assignment
     for i in range(len(state.model)):
         if (state.model[i] == TruthValue.UNASSIGNED):
-            # Guess a value for the ith variable
+            # Guess a value for the ith variable (nondeterministic)
             if (random.randint(0, 1) == 0):
                 state.to_prop.append((Literal.to_lit(i+1), Reason.DECIDE, -1))
             else:
                 state.to_prop.append((Literal.to_lit(-1*(i+1)), Reason.DECIDE, -1))
+                
+            # Deterministically choose a value for the ith variable (sometimes better for debugging)
+            # state.to_prop.append((Literal.to_lit(i+1), Reason.DECIDE, -1))
+            
             state.decision_level += 1
             print_global_state(state)
             return
@@ -40,11 +44,13 @@ def propagate(state: State) -> None:
 
         # Update the current assignment and model with the literal we're propagating
         state.m.append((curr_lit, state.decision_level, curr_reason, curr_clause_index))
+        
         if curr_lit.value:
             if state.model[curr_lit.name-1] == TruthValue.FALSE:
                 conflict(state, curr_clause_index)
                 new_decision_level = explain(state)
                 backjump(state, new_decision_level)
+                return
             else:
                 state.model[curr_lit.name-1] = TruthValue.TRUE
         else:
@@ -52,6 +58,7 @@ def propagate(state: State) -> None:
                 conflict(state, curr_clause_index)
                 new_decision_level = explain(state)
                 backjump(state, new_decision_level)
+                return
             else:
                 state.model[curr_lit.name - 1] = TruthValue.FALSE 
 
@@ -69,12 +76,12 @@ def propagate(state: State) -> None:
                 if state.model[lit_to_prop.name - 1] == TruthValue.UNASSIGNED:
                     state.to_prop.append((lit_to_prop, Reason.PROPAGATE, clause_index))
                 elif lit_to_prop.value and state.model[lit_to_prop.name - 1] == TruthValue.FALSE:
-                    conflict(state, curr_clause_index)
+                    conflict(state, clause_index)
                     new_decision_level = explain(state)
                     backjump(state, new_decision_level)
                     return
                 elif not lit_to_prop.value and state.model[lit_to_prop.name - 1] == TruthValue.TRUE:
-                    conflict(state, curr_clause_index)
+                    conflict(state, clause_index)
                     new_decision_level = explain(state)
                     backjump(state, new_decision_level)
                     return
@@ -85,23 +92,23 @@ def propagate(state: State) -> None:
 # Perform resolution on the conflict clause until we reach a UIP.
 # Return the decision level to backjump to.
 def explain(state: State) -> int:
-    print("\n----- EXECUTING EXPLAIN RULE -----\n")
-    print_global_state(state)
+    print("\n----- EXECUTING EXPLAIN RULE -----")
     # "Mark" all literals from conflict clause
+    print("current assignment stack:", state.m.tracker)
+    print("current conflict clause:", state.conflict_clause)
+    print("current model:", state.model)
     marked_lits = set()
     for lit in state.conflict_clause:
-        marked_lits.add(lit)
+        marked_lits.add(lit.comp())
         
     # We keep applying explain until we find a level to backjump to
-    while True:
-        if not state.m.tracker:
-            break
-            
+    while state.m.tracker:
         top_assign = state.m.tracker[-1]
         
         # If the top literal in assignment is unmarked, we clear it
         if top_assign[0] not in marked_lits:
             state.m.tracker.pop()
+            state.model[top_assign[0].name - 1] = TruthValue.UNASSIGNED
             continue
         
         # We check if there is another marked literal before the most recent decision.
@@ -126,19 +133,40 @@ def explain(state: State) -> int:
         # If so, pop the marked literal and mark its causes
         marked_lits.remove(top_assign[0])
         state.m.tracker.pop()
+        state.model[top_assign[0].name - 1] = TruthValue.UNASSIGNED
         for lit in state.delta[top_assign[3]-1]:
             if lit != top_assign[0]:
-                marked_lits.add(lit)
-                
-    learn(state, top_assign[0])
-    state.to_prop.append((top_assign[0].comp(), Reason.PROPAGATE, state.num_clauses))
-    state.decision_level = top_assign[1] - 1
-    return top_assign[1]
+                marked_lits.add(lit.comp())
+             
+    # If we don't have a decision to flip, fail
+    if top_assign[1] == 0:
+        exit_unsat()  
+    
+    # Propagate complement of literal with highest decision level in conflict clause
+    state.to_prop = deque([(top_assign[0].comp(), Reason.PROPAGATE, state.num_clauses)])
+    
+    # Find next highest decision level
+    next_decision_level = 0 
+    for assign in reversed(state.m.tracker[:-1]):
+        if (assign[0] in marked_lits) and (assign[1] < top_assign[1]):
+            next_decision_level = assign[1]
+            break
+            
+    state.decision_level = next_decision_level
+    print("updated assignment stack:", state.m.tracker)
+    print("updated conflict clause:", [val.comp() for val in marked_lits])
+    print("updated model:", state.model)
+    print_global_state(state)
+    
+    # Update conflict clause
+    state.conflict_clause = [val.comp() for val in marked_lits]
+    return next_decision_level
         
 # Learn rule.
 # Add the conflict clause to the clause set delta. 
 # Also involves initializing watched literals for the new clause.
 def learn(state: State, max_dl_lit: Literal) -> None:
+    print("\n----- EXECUTING LEARN RULE -----")
     state.num_clauses += 1
     
     # Add watched literals for conflict clause.
@@ -153,30 +181,22 @@ def learn(state: State, max_dl_lit: Literal) -> None:
         state.literals_with_watching_clauses[compute_lit_index(state.conflict_clause[1])][1].append(state.num_clauses)
     
     # Add conflict clause to clause set
-    state.delta.append(state.conflict_clause)       
+    state.delta.append(state.conflict_clause)    
+    print_global_state(state)   
         
 # Backjump rule.
 # Flip the decision at the decision level prescribed by
 # decision_level. Update the assignment and model.
 def backjump(state: State, decision_level: int) -> None:
-    print("\n----- EXECUTING BACKJUMP RULE -----\n")
-    # If there is no decision to flip, fail
-    if decision_level == -1:
-        exit_unsat()
-        
+    print("\n----- EXECUTING BACKJUMP RULE -----\n") 
+    print("decision level to backjump to:", decision_level)       
     # Clear conflict clause
     state.conflict_clause = None
-
-    # Clear propagation queue
-    state.to_prop = deque()
  
     # Clear assignment up to the most recent decision
-    for i, val in reversed(list(enumerate(state.m.tracker))):
-        if state.m.tracker[i-1][1] <= decision_level:
-            break
-        else: 
-            state.m.tracker.pop()
-            state.model[val[0].name-1] = TruthValue.UNASSIGNED
+    while state.m.tracker and state.m.tracker[-1][1] > decision_level:
+        state.model[state.m.tracker[-1][0].name-1] = TruthValue.UNASSIGNED
+        state.m.tracker.pop()
   
     print_global_state(state)
 
@@ -185,4 +205,6 @@ def backjump(state: State, decision_level: int) -> None:
 # clause_index is falsified by the current assignment.
 # So, we create a conflict clause.
 def conflict(state: State, clause_index: int) -> None:
+    print("\n----- EXECUTING CONFLICT RULE -----\n") 
+    print_global_state(state)   
     state.conflict_clause = state.delta[clause_index-1]
