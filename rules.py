@@ -13,7 +13,7 @@ from utils import compute_lit_index, update_watched_literals, print_global_state
 # Pick an unassigned literal, give it a random truth value, 
 # and update our data structures accordingly.
 def decide(state: State) -> None:
-    print("\n----- EXECUTING DECIDE RULE -----\n")
+    #print("\n----- EXECUTING DECIDE RULE -----\n")
 
     # Update model, queue of literals to propagate, and current assignment
     for i in range(len(state.model)):
@@ -28,7 +28,7 @@ def decide(state: State) -> None:
             # state.to_prop.append((Literal.to_lit(i+1), Reason.DECIDE, -1))
             
             state.decision_level += 1
-            print_global_state(state)
+            #print_global_state(state)
             return
 
     # If no variable to decide on, the problem is SAT
@@ -38,7 +38,7 @@ def decide(state: State) -> None:
 # Apply unit propagation to completion (until we exhaust the queue of literals to propagate)
 def propagate(state: State) -> None:
     while state.to_prop:
-        print("\n----- EXECUTING PROPAGATE RULE -----\n")
+        #print("\n----- EXECUTING PROPAGATE RULE -----\n")
         curr_prop = state.to_prop.popleft()
         curr_lit, curr_reason, curr_clause_index = curr_prop[0], curr_prop[1], curr_prop[2]
 
@@ -86,17 +86,17 @@ def propagate(state: State) -> None:
                     backjump(state, new_decision_level)
                     return
                 
-        print_global_state(state)
+        #print_global_state(state)
 
 # (Repeated) explain rule.
 # Perform resolution on the conflict clause until we reach a UIP.
 # Return the decision level to backjump to.
 def explain(state: State) -> int:
-    print("\n----- EXECUTING EXPLAIN RULE -----")
+    #print("\n----- EXECUTING EXPLAIN RULE -----")
     # "Mark" all literals from conflict clause
-    print("current assignment stack:", state.m.tracker)
-    print("current conflict clause:", state.conflict_clause)
-    print("current model:", state.model)
+    #print("current assignment stack:", state.m.tracker)
+    #print("current conflict clause:", state.conflict_clause)
+    #print("current model:", state.model)
     marked_lits = set()
     for lit in state.conflict_clause:
         marked_lits.add(lit.comp())
@@ -153,11 +153,11 @@ def explain(state: State) -> int:
             break
             
     state.decision_level = next_decision_level
-    print("updated assignment stack:", state.m.tracker)
-    print("updated conflict clause:", [val.comp() for val in marked_lits])
-    print("updated model:", state.model)
+    #print("updated assignment stack:", state.m.tracker)
+    #print("updated conflict clause:", [val.comp() for val in marked_lits])
+    #print("updated model:", state.model)
     state.conflict_clause = [val.comp() for val in marked_lits]
-    print_global_state(state)
+    #print_global_state(state)
     
     # Learn the current conflict clause
     learn(state, top_assign[0])
@@ -168,30 +168,31 @@ def explain(state: State) -> int:
 # Add the conflict clause to the clause set delta. 
 # Also involves initializing watched literals for the new clause.
 def learn(state: State, max_dl_lit: Literal) -> None:
-    print("\n----- EXECUTING LEARN RULE -----")
+    #print("\n----- EXECUTING LEARN RULE -----")
     state.num_clauses += 1
     
     # Add watched literals for conflict clause.
     # First watched literal is the one at highest decision level. 
     state.literals_with_watching_clauses[compute_lit_index(max_dl_lit.comp())][1].append(state.num_clauses)
     
-    # Second watched literal is just the first literal of the clause,
-    # or the second literal if the first literal is already watched
-    if max_dl_lit != state.conflict_clause[0]:
-        state.literals_with_watching_clauses[compute_lit_index(state.conflict_clause[0])][1].append(state.num_clauses)
-    else:
+    # Move first watched literal to beginning of conflict clause
+    max_dl_index = state.conflict_clause.index(max_dl_lit.comp())
+    state.conflict_clause[0], state.conflict_clause[max_dl_index] = state.conflict_clause[max_dl_index], state.conflict_clause[0] 
+    
+    # Second watched literal is the second literal of the clause,
+    if len(state.conflict_clause) > 1:
         state.literals_with_watching_clauses[compute_lit_index(state.conflict_clause[1])][1].append(state.num_clauses)
     
     # Add conflict clause to clause set
     state.delta.append(state.conflict_clause)    
-    print_global_state(state)   
+    #print_global_state(state)   
         
 # Backjump rule.
 # Flip the decision at the decision level prescribed by
 # decision_level. Update the assignment and model.
 def backjump(state: State, decision_level: int) -> None:
-    print("\n----- EXECUTING BACKJUMP RULE -----\n") 
-    print("decision level to backjump to:", decision_level)       
+    #print("\n----- EXECUTING BACKJUMP RULE -----\n") 
+    #print("decision level to backjump to:", decision_level)       
     # Clear conflict clause
     state.conflict_clause = None
  
@@ -200,14 +201,14 @@ def backjump(state: State, decision_level: int) -> None:
         state.model[state.m.tracker[-1][0].name-1] = TruthValue.UNASSIGNED
         state.m.tracker.pop()
   
-    print_global_state(state)
+    #print_global_state(state)
 
 # Conflict rule.
 # We have reached a conflict, where the clause denoted by
 # clause_index is falsified by the current assignment.
 # So, we create a conflict clause.
 def conflict(state: State, clause_index: int) -> None:
-    print("\n----- EXECUTING CONFLICT RULE -----\n") 
+    #print("\n----- EXECUTING CONFLICT RULE -----\n") 
     state.conflict_clause = state.delta[clause_index-1]
-    print("conflict clause:", state.conflict_clause)
-    print_global_state(state)   
+    #print("conflict clause:", state.conflict_clause)
+    #print_global_state(state)   

@@ -14,10 +14,10 @@ def compute_lit_index(lit: Literal) -> int:
 # with old_lit and return None. If not, we return the other watched 
 # literal (which may spur a conflict or a new propagation).
 def update_watched_literals(state: State, clause_number: int, clause: Clause, old_lit: Literal) -> Literal | None:
-    print("----- UPDATING WATCHED LITERALS -----")
-    print("falsified literal:", old_lit)
-    print("clause to (attempt to) update:", clause)
-    print("clause number:", clause_number)
+    #print("----- UPDATING WATCHED LITERALS -----")
+    #print("falsified literal:", old_lit)
+    #print("clause to (attempt to) update:", clause)
+    #print("clause number:", clause_number)
     if clause[0] == old_lit:
         old_lit_index = 0 
     else:
@@ -30,18 +30,18 @@ def update_watched_literals(state: State, clause_number: int, clause: Clause, ol
             # Update literals_with_watching_clauses. This clause is no longer watching old_lit,
             # and starts watching new_lit
             new_lit = clause[i]
-            print("new literal to watch:", new_lit, i)
-            print("UPDATING literals_with_watching_clauses")
+            #print("new literal to watch:", new_lit, i)
+            #print("UPDATING literals_with_watching_clauses")
             lwc = state.literals_with_watching_clauses
-            print(lwc[compute_lit_index(old_lit)][1])
-            print(lwc[compute_lit_index(new_lit)][1])
+            #print(lwc[compute_lit_index(old_lit)][1])
+            #print(lwc[compute_lit_index(new_lit)][1])
             lwc[compute_lit_index(old_lit)][1].remove(clause_number)
             lwc[compute_lit_index(new_lit)][1].append(clause_number)
-            print(lwc[compute_lit_index(old_lit)][1])
-            print(lwc[compute_lit_index(new_lit)][1])
+            #print(lwc[compute_lit_index(old_lit)][1])
+            #print(lwc[compute_lit_index(new_lit)][1])
 
             clause[old_lit_index], clause[i] = clause[i], clause[old_lit_index]
-            print("reordered clause:", clause)
+            #print("reordered clause:", clause)
             return None
 
     # We failed to find a new literal to watch
@@ -72,12 +72,12 @@ def print_global_state(state: State) -> None:
   
 def exit_sat(state: State):
   print("sat")
-  # for i, assignment in enumerate(state.model):
-  #   if assignment == TruthValue.TRUE:
-  #     truth_value = "true"
-  #   else:
-  #     truth_value = "false"
-  #   print(f"{i+1} := {truth_value}")
+  for i, assignment in enumerate(state.model):
+    if assignment == TruthValue.TRUE:
+      truth_value = "true"
+    else:
+      truth_value = "false"
+    print(f"{i+1} := {truth_value}")
   exit()
     
 def exit_unsat():
