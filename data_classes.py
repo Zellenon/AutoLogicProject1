@@ -42,7 +42,10 @@ class Clause(Set):
     # vars: Set[Variable]
 
     def __repr__(self) -> str:
-        return "{ " + ", ".join({str(w) for w in self}) + " }"
+        return "{ " + ", ".join({str(w) for w in sorted(list(self))}) + " }"
+
+    def __str__(self) -> str:
+        return "{ " + ", ".join({str(w) for w in sorted(list(self))}) + " }"
 
     def has_var(self, var: Variable) -> bool:
         return (var in self) or (var.inv() in self)
@@ -50,14 +53,23 @@ class Clause(Set):
     def is_sat(self, vars: set[Variable]):
         return len(self & vars) > 0
 
+    def inv(self):
+        return Clause({w.inv() for w in self})
+
+    def lone(self):
+        if len(self) == 1:
+            return list(self)[0]
+        else:
+            return None
+
 
 class M:
     tracker: List[Variable | None]
 
     def __init__(self) -> None:
         self.i = False
-        self._var_set = set()
-        self._inv_set = set()
+        self._var_set = Clause()
+        self._inv_set = Clause()
         self.tracker = []
         self.old_tracker = []
         self.i = True
@@ -74,29 +86,35 @@ class M:
     def has_var(self, var: Variable) -> bool:
         return var in self.var_set() | self.inv_set()
 
-    def var_set(self) -> set[Variable]:
+    def var_set(self) -> Clause:
         if self.tracker == self.old_tracker:
             return self._var_set
         else:
             self.old_tracker = self.tracker.copy()
-            self._var_set = set(self.tracker) - {None}
-            self._inv_set = {w.inv() for w in self._var_set}
+            self._var_set = Clause(set(self.tracker) - {None})
+            self._inv_set = Clause({w.inv() for w in self._var_set})
             return self._var_set
 
-    def inv_set(self) -> set[Variable]:
+    def inv_set(self) -> Clause:
         if self.tracker == self.old_tracker:
             return self._inv_set
         else:
             self.old_tracker = self.tracker.copy()
-            self._var_set = set(self.tracker) - {None}
-            self._inv_set = {w.inv() for w in self._var_set}
+            self._var_set = Clause(set(self.tracker) - {None})
+            self._inv_set = Clause({w.inv() for w in self._var_set})
             return self._inv_set
+
+    def lev(self, var: Variable):
+        var_inv = var.inv()
+        index = [i for i, v in enumerate(self.tracker) if v == var or v == var_inv][0]
+        return self.tracker[:index].count(None)
 
 
 class State:
     def __init__(self, delta: list[Clause]) -> None:
         self.delta = delta
         self.m = M()
+        self.c: None | Clause = None
         self.to_prop = []
         # self.watched_lits = [(min(w), min(w - {min(w)})) for w in self.delta]
         self.literals = {x for xs in self.delta for x in xs}
@@ -112,6 +130,7 @@ class State:
         temp = State(self.delta)
         temp.m = copy.deepcopy(self.m)
         temp.to_prop = copy.deepcopy(self.to_prop)
+        temp.c = copy.deepcopy(self.c)
         # temp.watched_lits = copy.deepcopy(self.watched_lits)
         return temp
 

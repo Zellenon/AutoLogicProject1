@@ -12,9 +12,10 @@ def do_rules(state: State) -> State:
     pbar = tqdm(total=2 + len({w.name for w in delta.literals}))
     while applied_rule:
         pbar.set_description(
-            f"M: ({len(state.m.tracker)}, {len([w for w in state.m.tracker if w == None])})"
+            f"M: ({len(state.m.tracker)}, {len([w for w in state.m.tracker if w == None])}, {state.c})"
         )
-        pbar.update(1)
+        pbar.reset()
+        pbar.update(len(state.m.tracker))
         applied_rule = False
         for rule in rules:
             pre, post = rule
@@ -22,7 +23,7 @@ def do_rules(state: State) -> State:
             if type(res) == dict:
                 applied_rule = True
                 new_state = post(state, **res)
-                # print(f"{pre}: {res}")
+                print(f"{pre}: {res}")
                 if new_state.is_sat():
                     return new_state
                 state = new_state
@@ -30,14 +31,6 @@ def do_rules(state: State) -> State:
                 break
             elif res == False:
                 break
-        if (res := match_backtrack(state)) and (not applied_rule):
-            applied_rule = True
-            # print(f"backtrack: {res}")
-            state = do_backtrack(state, **res)
-            pbar.reset()
-            pbar.update(len(state.m.tracker))
-        # print("-----")
-        # print(m)
     pbar.close()
     return state
 
