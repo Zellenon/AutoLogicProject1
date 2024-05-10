@@ -1,0 +1,294 @@
+-----------------------------
+Timing ./project1-tests/sat/block0.cnf
+
+real	0m0.021s
+user	0m0.015s
+sys	0m0.006s
+-----------------------------
+Timing ./project1-tests/sat/cnfgen-php-10-10.cnf
+
+real	1m39.213s
+user	1m39.063s
+sys	0m0.050s
+-----------------------------
+Timing ./project1-tests/sat/elimredundant.cnf
+
+real	0m0.025s
+user	0m0.021s
+sys	0m0.004s
+-----------------------------
+Timing ./project1-tests/sat/prime121.cnf
+
+real	0m0.088s
+user	0m0.077s
+sys	0m0.010s
+-----------------------------
+Timing ./project1-tests/sat/prime1369.cnf
+
+real	0m0.821s
+user	0m0.811s
+sys	0m0.010s
+-----------------------------
+Timing ./project1-tests/sat/prime1681.cnf
+
+real	0m0.740s
+user	0m0.733s
+sys	0m0.007s
+-----------------------------
+Timing ./project1-tests/sat/prime169.cnf
+
+real	0m0.161s
+user	0m0.161s
+sys	0m0.000s
+-----------------------------
+Timing ./project1-tests/sat/prime1849.cnf
+
+real	0m1.490s
+user	0m1.485s
+sys	0m0.004s
+-----------------------------
+Timing ./project1-tests/sat/prime841.cnf
+
+real	0m0.551s
+user	0m0.541s
+sys	0m0.007s
+-----------------------------
+Timing ./project1-tests/sat/prime961.cnf
+
+real	0m0.664s
+user	0m0.652s
+sys	0m0.010s
+-----------------------------
+Timing ./project1-tests/sat/sat10.cnf
+
+real	0m0.037s
+user	0m0.032s
+sys	0m0.004s
+-----------------------------
+Timing ./project1-tests/sat/sat12.cnf
+
+real	0m0.037s
+user	0m0.021s
+sys	0m0.016s
+-----------------------------
+Timing ./project1-tests/sat/sqrt10201.cnf
+
+real	0m0.120s
+user	0m0.120s
+sys	0m0.000s
+-----------------------------
+Timing ./project1-tests/sat/sqrt1042441.cnf
+
+real	0m0.249s
+user	0m0.242s
+sys	0m0.007s
+-----------------------------
+Timing ./project1-tests/sat/sqrt10609.cnf
+
+real	0m0.076s
+user	0m0.073s
+sys	0m0.004s
+-----------------------------
+Timing ./project1-tests/sat/sqrt11449.cnf
+
+real	0m0.074s
+user	0m0.067s
+sys	0m0.007s
+-----------------------------
+Timing ./project1-tests/sat/uf20-01000.cnf
+
+real	0m0.025s
+user	0m0.025s
+sys	0m0.000s
+-----------------------------
+Timing ./project1-tests/sat/uf20-0100.cnf
+
+real	0m0.022s
+user	0m0.018s
+sys	0m0.003s
+-----------------------------
+Timing ./project1-tests/sat/uf20-0101.cnf
+
+real	0m0.023s
+user	0m0.015s
+sys	0m0.008s
+-----------------------------
+Timing ./project1-tests/sat/uf20-0102.cnf
+
+real	0m0.026s
+user	0m0.026s
+sys	0m0.000s
+-----------------------------
+Timing ./project1-tests/sat/uf20-0103.cnf
+
+real	0m0.023s
+user	0m0.019s
+sys	0m0.003s
+-----------------------------
+Timing ./project1-tests/sat/uf20-0104.cnf
+
+real	0m0.024s
+user	0m0.020s
+sys	0m0.003s
+-----------------------------
+Timing ./project1-tests/sat/uf20-0105.cnf
+
+real	0m0.036s
+user	0m0.026s
+sys	0m0.010s
+-----------------------------
+Timing ./project1-tests/sat/uf20-0106.cnf
+
+real	0m0.026s
+user	0m0.025s
+sys	0m0.000s
+-----------------------------
+Timing ./project1-tests/unsat/add4.cnf
+
+real	0m0.029s
+user	0m0.029s
+sys	0m0.000s
+-----------------------------
+Timing ./project1-tests/unsat/add8.cnf
+
+real	0m0.058s
+user	0m0.048s
+sys	0m0.010s
+-----------------------------
+Timing ./project1-tests/unsat/cnfgen-parity-9.cnf
+
+real	0m0.066s
+user	0m0.063s
+sys	0m0.003s
+-----------------------------
+Timing ./project1-tests/unsat/cnfgen-peb-pyramid-20.cnf
+
+real	0m0.039s
+user	0m0.032s
+sys	0m0.007s
+-----------------------------
+Timing ./project1-tests/unsat/cnfgen-php-5-4.cnf
+
+real	0m0.026s
+user	0m0.020s
+sys	0m0.007s
+-----------------------------
+Timing ./project1-tests/unsat/cnfgen-ram-4-3-10.cnf
+
+real	0m1.243s
+user	0m1.228s
+sys	0m0.013s
+-----------------------------
+Timing ./project1-tests/unsat/cnfgen-tseitin-10-4.cnf
+
+real	0m0.253s
+user	0m0.242s
+sys	0m0.010s
+-----------------------------
+Timing ./project1-tests/unsat/elimclash.cnf
+
+real	0m0.029s
+user	0m0.025s
+sys	0m0.003s
+-----------------------------
+Timing ./project1-tests/unsat/false.cnf
+
+real	0m0.027s
+user	0m0.020s
+sys	0m0.007s
+-----------------------------
+Timing ./project1-tests/unsat/full1.cnf
+
+real	0m0.026s
+user	0m0.016s
+sys	0m0.010s
+-----------------------------
+Timing ./project1-tests/unsat/full3.cnf
+
+real	0m0.023s
+user	0m0.013s
+sys	0m0.010s
+-----------------------------
+Timing ./project1-tests/unsat/full5.cnf
+
+real	0m0.025s
+user	0m0.018s
+sys	0m0.007s
+-----------------------------
+Timing ./project1-tests/unsat/full7.cnf
+
+real	0m0.028s
+user	0m0.022s
+sys	0m0.006s
+-----------------------------
+Timing ./project1-tests/unsat/ph6.cnf
+
+real	0m0.202s
+user	0m0.198s
+sys	0m0.004s
+-----------------------------
+Timing ./project1-tests/unsat/unit7.cnf
+
+real	0m0.020s
+user	0m0.013s
+sys	0m0.007s
+-----------------------------
+Timing ./project1-tests/unsat/uuf100-010.cnf
+
+real	0m0.734s
+user	0m0.730s
+sys	0m0.004s
+-----------------------------
+Timing ./project1-tests/unsat/uuf100-0117.cnf
+
+real	0m1.009s
+user	0m1.004s
+sys	0m0.004s
+-----------------------------
+Timing ./project1-tests/unsat/uuf100-0120.cnf
+
+real	0m2.551s
+user	0m2.531s
+sys	0m0.017s
+-----------------------------
+Timing ./project1-tests/unsat/uuf100-012.cnf
+
+real	0m2.028s
+user	0m2.018s
+sys	0m0.007s
+-----------------------------
+Timing ./project1-tests/unsat/uuf100-0130.cnf
+
+real	0m0.455s
+user	0m0.448s
+sys	0m0.007s
+-----------------------------
+Timing ./project1-tests/unsat/uuf100-0147.cnf
+
+real	0m0.569s
+user	0m0.558s
+sys	0m0.010s
+-----------------------------
+Timing ./project1-tests/unsat/uuf100-0151.cnf
+
+real	0m0.534s
+user	0m0.523s
+sys	0m0.010s
+-----------------------------
+Timing ./project1-tests/unsat/uuf100-0161.cnf
+
+real	0m6.515s
+user	0m6.494s
+sys	0m0.014s
+-----------------------------
+Timing ./project1-tests/unsat/uuf100-0175.cnf
+
+real	0m1.486s
+user	0m1.484s
+sys	0m0.000s
+-----------------------------
+Timing ./project1-tests/unsat/uuf100-0182.cnf
+
+real	0m2.976s
+user	0m2.966s
+sys	0m0.007s
