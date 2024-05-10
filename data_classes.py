@@ -2,11 +2,12 @@
 # File that implements objects representing literals, clauses, and the solver's state
 ###
 from collections import deque
-from typing import List, Set, Tuple
 from enum import Enum
+from typing import List, Set, Tuple
 
-TruthValue = Enum('TruthValue', ['TRUE', 'FALSE', 'UNASSIGNED'])
-Reason = Enum('Reason', ['DECIDE', 'PROPAGATE', 'BACKJUMP'])
+TruthValue = Enum("TruthValue", ["TRUE", "FALSE", "UNASSIGNED"])
+Reason = Enum("Reason", ["DECIDE", "PROPAGATE", "BACKJUMP"])
+
 
 class Literal:
     name: int
@@ -38,12 +39,12 @@ class Literal:
 
     def same_lit(self, other) -> bool:
         return self.name == other.name
-    
+
     def to_int(self) -> int:
         if self.value:
-            self.name 
-        else: 
-            -1*self.name
+            return self.name
+        else:
+            return -1 * self.name
 
     @staticmethod
     def to_lit(lit: int):
@@ -73,59 +74,59 @@ class State:
     def __init__(self, delta: list[Clause], num_variables, num_clauses) -> None:
         # The number of variables in the problem (integer)
         self.num_variables = num_variables
-        
+
         # The number of clauses in the problem (integer)
         self.num_clauses = num_clauses
-        
+
         # List of clauses
         self.delta = delta
-        
+
         # Current assignment (list of <literal, int> pairs, where the int represents
         # the decision level of the corresponding literal)
         # Should also track a REASON, either DECISION, PROPAGATION, or BACKTRACK
         self.m = M()
-        
+
         # Queue of < literal, reason, int > triples to propagate.
         # If the reason is propagation, then the int refers to the clause index of the propagating clause.
         # Otherwise, the int is not meaningful and is set to -1.
         self.to_prop = deque()
-        
+
         # Current model. The ith index corresponds to the i+1st variable.
         # Each variable is TRUE, FALSE, or UNASSIGNED (see TruthValue enum)
         self.model = []
-        
+
         # The current decision level
         self.decision_level = 0
-        
+
         # Conflict clause option (can be None if there is no conflict clause)
         self.conflict_clause = None
-        
+
         # List of clauses watched by each literal. Each element is a pair.
         # The first item in the pair is the literal, and the second item
         # is the list of clauses that watch the literal. The clauses are not given
         # directly, rather, it is a list of indices of clauses in delta (with 1-based indexing).
         self.literals_with_watching_clauses = []
-        
+
         # Initialize model and watched literals
-        for i in range(1, self.num_variables+1):
+        for i in range(1, self.num_variables + 1):
             self.model.append(TruthValue.UNASSIGNED)
 
             watching_clauses_pos = []
             watching_clauses_neg = []
 
             for j, clause in enumerate(delta, start=1):
-                if (clause[0].name == i and clause[0].value):
+                if clause[0].name == i and clause[0].value:
                     watching_clauses_pos.append(int(j))
-                elif (clause[1:] and clause[1].name == i and clause[1].value):
+                elif clause[1:] and clause[1].name == i and clause[1].value:
                     watching_clauses_pos.append(int(j))
-                elif (clause[0].name == i and not clause[0].value):
+                elif clause[0].name == i and not clause[0].value:
                     watching_clauses_neg.append(int(j))
-                elif (clause[1:] and clause[1].name == i and not clause[1].value):
+                elif clause[1:] and clause[1].name == i and not clause[1].value:
                     watching_clauses_neg.append(int(j))
 
             self.literals_with_watching_clauses.append((i, watching_clauses_pos))
-            self.literals_with_watching_clauses.append((-1*i, watching_clauses_neg))
-            
+            self.literals_with_watching_clauses.append((-1 * i, watching_clauses_neg))
+
         # Sanity check
         for clause in self.delta:
             if not clause:
@@ -137,8 +138,8 @@ class State:
         return "\n".join(strings)
 
 
-def parse_dimacs(lines: List[str]) -> List[Clause]:
-    delta = [] # Set of clauses
+def parse_dimacs(lines: List[str]) -> State:
+    delta = []  # Set of clauses
     for line in lines:
         if line[0] == "c":
             continue
