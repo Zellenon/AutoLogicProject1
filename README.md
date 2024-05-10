@@ -19,3 +19,4 @@ Below, we outline some steps to run the project, along with their associated ter
     `./run_tests.zsh`
 5. You can also call the solver on a single `.cnf` file. \
    `python3 main.py <filename>`
+6. To time all tests, run `./time_tests.zsh`. The script is designed to properly log results to a file when run as `sh time_tests.zsh 2>&1 | tee [logfile_name]`
